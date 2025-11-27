@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field
@@ -55,6 +56,43 @@ class AuthResponse(TokenPair):
 class MessageResponse(BaseModel):
     message: str
     detail: Optional[str] = None
+
+
+class PlayerPosition(str, Enum):
+    GK = "GK"
+    DEF = "DEF"
+    MID = "MID"
+    ATT = "ATT"
+
+
+class PlayerBase(BaseModel):
+    nome: str = Field(min_length=3, max_length=160)
+    posicao: PlayerPosition
+    numero_camisa: Optional[int] = Field(default=None, ge=0, le=99)
+
+
+class PlayerCreate(PlayerBase):
+    group_id: str
+
+
+class PlayerUpdate(BaseModel):
+    nome: Optional[str] = Field(default=None, min_length=3, max_length=160)
+    posicao: Optional[PlayerPosition] = None
+    numero_camisa: Optional[int] = Field(default=None, ge=0, le=99)
+    group_id: Optional[str] = None
+
+
+class PlayerResponse(BaseModel):
+    id: str
+    group_id: str
+    nome: str
+    posicao: PlayerPosition
+    numero_camisa: Optional[int]
+    created_at: datetime
+
+
+class PlayersListResponse(BaseModel):
+    players: list[PlayerResponse]
 
 
 class GroupBase(BaseModel):

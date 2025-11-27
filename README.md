@@ -56,6 +56,19 @@ Endpoints protegidos que alimentam a nova tela de gestao de grupos:
 
 Tabela `groups` agora contem `id`, `user_id`, `nome`, `descricao`, `ano_base`, `is_active`, `created_at` e `updated_at` (alem do relacionamento com `players` e `matches`).
 
+### CRUD de jogadores
+
+Endpoints autenticados para montar a tela de elenco. Todos exigem o `group_id` pertencente ao usuario logado:
+
+| Metodo | Rota             | Descricao |
+| ------ | ---------------- | --------- |
+| GET    | `/players`       | Lista jogadores filtrando obrigatoriamente por `group_id` (query string). Ordena alfabeticamente e valida posse do grupo. |
+| POST   | `/players`       | Cria jogador recebendo `nome`, `posicao` (`GK/DEF/MID/ATT`), `numero_camisa` (0-99, opcional) e `group_id`. Normaliza o nome e garante posicao permitida. |
+| PUT    | `/players/{id}`  | Atualiza qualquer campo (inclusive transferir para outro grupo do mesmo usuario). Ignora requisicoes sem payload valido. |
+| DELETE | `/players/{id}`  | Remove o jogador, garantindo que pertence a um grupo do usuario autenticado. |
+
+Os schemas correspondentes estao em `backend/app/schemas.py` (`PlayerCreate`, `PlayerUpdate`, `PlayerResponse`, `PlayerPosition`) e o roteador completo em `backend/app/routes/players.py`.
+
 ## Frontend (React + Vite + Tailwind)
 
 1. Instale dependencias com npm ou pnpm (exemplo com npm):
@@ -77,10 +90,13 @@ Tabela `groups` agora contem `id`, `user_id`, `nome`, `descricao`, `ano_base`, `
    - Cards com totais (atletas, partidas, gols e presencas) + listas de ultimos jogos e artilharia.
    - Alternancia manual de tema (claro/escuro) com Tailwind em modo `class`.
 - Nova aba **Grupos** (dentro do dashboard) oferece CRUD completo: lista responsiva, botao "Criar grupo", botoes "Definir como ativo", modais de edicao/confirmacao de exclusao e atalho "Jogadores" para navegar para a tela de elenco.
+- Aba **Jogadores** exibe o componente `Players.tsx`, com selecao de grupo, busca textual, filtro por posicao, cards com avatar inicial e modais para criar/editar/excluir atletas, todos alimentados pelo `playersApi.ts`.
 - Componentes/servicos principais:
    - `ActiveGroupContext.tsx` agora respeita o estado `is_active` retornado pelo backend para priorizar o grupo certo.
    - `groupsApi.ts` centraliza chamadas autenticadas (`GET/POST/PUT/DELETE/POST set-active`).
    - `Groups.tsx` (pedida como *Groups.jsx*, implementada em TSX para manter o padrao do projeto) renderiza cards, valida formularios e reutiliza o contexto para sincronizar o dashboard.
+   - `playersApi.ts` encapsula as chamadas `GET/POST/PUT/DELETE` para `/players`, aplicando timeout e mensagens amigaveis.
+   - `Players.tsx` controla filtros, estado de modais, validacao de formularios e sincroniza selecao de grupo com o `ActiveGroupProvider` para manter o dashboard coerente.
 - Para testar manualmente:
    1. Faca login/cadastro e copie o token exibido na sessao.
    2. Popule as tabelas no Postgres (players, matches, events) para alimentar os cards.

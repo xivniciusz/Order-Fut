@@ -3,6 +3,7 @@ import type { AuthResponse } from "./api";
 import { ActiveGroupProvider, useActiveGroup } from "./ActiveGroupContext";
 import type { ActiveGroupSummary, RecentMatchSummary, TopScorer } from "./dashboardApi";
 import Groups from "./Groups";
+import Players from "./Players";
 
 export type DashboardProps = {
   auth: AuthResponse;
@@ -28,26 +29,6 @@ const formatDateTime = (value?: string | null) => {
   } catch {
     return "Data invalida";
   }
-};
-
-const formatRelative = (value?: string | null) => {
-  if (!value) {
-    return "Sem previsao";
-  }
-  const target = new Date(value).getTime();
-  const now = Date.now();
-  const diff = target - now;
-  const formatter = new Intl.RelativeTimeFormat("pt-BR", { numeric: "auto" });
-  const minutes = Math.round(diff / 60000);
-  if (Math.abs(minutes) < 60) {
-    return formatter.format(minutes, "minute");
-  }
-  const hours = Math.round(minutes / 60);
-  if (Math.abs(hours) < 24) {
-    return formatter.format(hours, "hour");
-  }
-  const days = Math.round(hours / 24);
-  return formatter.format(days, "day");
 };
 
 const Skeleton = ({ className }: { className: string }) => (
@@ -104,17 +85,12 @@ function GroupsPanel() {
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-slate-500 dark:text-slate-300">
                     <div className="rounded-xl bg-black/5 px-3 py-2 dark:bg-white/5">
-                      <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-400">Atletas</p>
+                      <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-400">Jogadores</p>
                       <p className="text-lg font-semibold text-slate-800 dark:text-white">{group.total_players}</p>
                     </div>
                     <div className="rounded-xl bg-black/5 px-3 py-2 dark:bg-white/5">
-                      <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-400">Jogos</p>
-                      <p className="text-lg font-semibold text-slate-800 dark:text-white">{group.total_matches}</p>
-                    </div>
-                    <div className="col-span-2 rounded-xl bg-black/5 px-3 py-2 dark:bg-white/5">
-                      <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-400">Proximo compromisso</p>
-                      <p className="text-sm font-medium text-slate-800 dark:text-white">{formatDateTime(group.next_match)}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-300">{formatRelative(group.next_match)}</p>
+                      <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-400">Data</p>
+                      <p className="text-lg font-semibold text-slate-800 dark:text-white">{new Date(group.created_at).toLocaleDateString("pt-BR")}</p>
                     </div>
                   </div>
                 </button>
@@ -285,12 +261,17 @@ function DashboardBody({ auth }: { auth: AuthResponse }) {
 
 export default function Dashboard({ auth, onLogout }: DashboardProps) {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [view, setView] = useState<"overview" | "groups">("overview");
+  const [view, setView] = useState<"overview" | "groups" | "players">("overview");
+  const [playersGroupId, setPlayersGroupId] = useState<string | null>(null);
   const themeClasses = theme === "dark" ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-900";
 
   const navigateToPlayers = (groupId: string) => {
-    const targetUrl = `/players?group=${groupId}`;
-    window.location.href = targetUrl;
+    setPlayersGroupId(groupId);
+    setView("players");
+  };
+
+  const handlePlayersBack = () => {
+    setView("groups");
   };
 
   return (
@@ -351,11 +332,22 @@ export default function Dashboard({ auth, onLogout }: DashboardProps) {
                 >
                   Grupos
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setView("players")}
+                  className={`rounded-2xl px-4 py-2 text-xs font-semibold transition ${
+                    view === "players"
+                      ? "bg-emerald-500 text-emerald-950 shadow-lg shadow-emerald-500/30"
+                      : "border border-slate-700 text-slate-300"
+                  }`}
+                >
+                  Jogadores
+                </button>
               </div>
-              {view === "overview" ? (
-                <DashboardBody auth={auth} />
-              ) : (
-                <Groups token={auth.access_token} onNavigateToPlayers={navigateToPlayers} />
+              {view === "overview" && <DashboardBody auth={auth} />}
+              {view === "groups" && <Groups token={auth.access_token} onNavigateToPlayers={navigateToPlayers} />}
+              {view === "players" && (
+                <Players token={auth.access_token} initialGroupId={playersGroupId} onBack={handlePlayersBack} />
               )}
             </div>
           </main>
