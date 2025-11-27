@@ -85,6 +85,10 @@ export default function MatchLive({ token }: MatchLiveProps) {
     description: "",
   });
 
+  useEffect(() => {
+    setEventForm((prev) => ({ ...prev, playerId: "", assistPlayerId: "" }));
+  }, [eventForm.tipo]);
+
   const availablePlayers: MatchDetailPlayer[] = useMemo(() => {
     if (!matchDetail) {
       return [];
@@ -92,6 +96,27 @@ export default function MatchLive({ token }: MatchLiveProps) {
     const teams = Object.values(matchDetail.teams ?? {}).flat();
     return [...teams, ...matchDetail.bench];
   }, [matchDetail]);
+
+  const fieldPlayers: MatchDetailPlayer[] = useMemo(() => {
+    if (!matchDetail) {
+      return [];
+    }
+    return Object.values(matchDetail.teams ?? {}).flat();
+  }, [matchDetail]);
+
+  const benchPlayers: MatchDetailPlayer[] = useMemo(() => (matchDetail ? matchDetail.bench : []), [matchDetail]);
+
+  const playerOptions = useMemo(() => {
+    if (!matchDetail) {
+      return [];
+    }
+    if (eventForm.tipo === "substitution") {
+      return [...fieldPlayers, ...benchPlayers];
+    }
+    return fieldPlayers;
+  }, [matchDetail, eventForm.tipo, fieldPlayers, benchPlayers]);
+
+  const assistOptions = useMemo(() => fieldPlayers, [fieldPlayers]);
 
   const playerTeamMap = useMemo(() => {
     const map = new Map<string, number | null>();
@@ -200,7 +225,11 @@ export default function MatchLive({ token }: MatchLiveProps) {
   const handleLoadMatch = () => fetchMatch(matchIdInput.trim());
 
   const handleSelectScheduled = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setMatchIdInput(event.target.value);
+    const value = event.target.value;
+    setMatchIdInput(value);
+    if (value) {
+      fetchMatch(value);
+    }
   };
 
   const handleRotateTeam = async (teamNumber: number) => {
@@ -515,10 +544,10 @@ export default function MatchLive({ token }: MatchLiveProps) {
               className="mt-2 w-full rounded-2xl border border-slate-800/50 bg-slate-950/40 px-4 py-3 text-sm text-white"
               value={eventForm.playerId}
               onChange={(event) => setEventForm((prev) => ({ ...prev, playerId: event.target.value }))}
-              disabled={!detailLoaded || !availablePlayers.length || eventLoading}
+              disabled={!detailLoaded || !playerOptions.length || eventLoading}
             >
               <option value="">Selecione o atleta</option>
-              {availablePlayers.map((player) => (
+              {playerOptions.map((player) => (
                 <option key={player.match_player_id} value={player.player_id}>
                   {player.nome}
                 </option>
@@ -532,10 +561,10 @@ export default function MatchLive({ token }: MatchLiveProps) {
                 className="mt-2 w-full rounded-2xl border border-slate-800/50 bg-slate-950/40 px-4 py-3 text-sm text-white"
                 value={eventForm.assistPlayerId}
                 onChange={(event) => setEventForm((prev) => ({ ...prev, assistPlayerId: event.target.value }))}
-                disabled={!detailLoaded || !availablePlayers.length || eventLoading}
+                disabled={!detailLoaded || !assistOptions.length || eventLoading}
               >
                 <option value="">Sem assistencia</option>
-                {availablePlayers.map((player) => (
+                {assistOptions.map((player) => (
                   <option key={player.match_player_id} value={player.player_id}>
                     {player.nome}
                   </option>

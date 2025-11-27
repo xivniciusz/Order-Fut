@@ -13,6 +13,8 @@ type LocalPlayer = PlayerDto & {
   order: number;
 };
 
+const sortPlayersByOrder = (list: LocalPlayer[]): LocalPlayer[] => [...list].sort((a, b) => a.order - b.order);
+
 const teamSizeOptions = [5, 6, 7, 8, 9, 11];
 
 const inputBase =
@@ -35,7 +37,6 @@ export default function MatchSetup({ token }: MatchSetupProps) {
   const [matchForm, setMatchForm] = useState(() => ({
     titulo: "Partida amistosa",
     startsAt: new Date().toISOString().slice(0, 16),
-    local: "",
     teamSize: 5,
     goalkeepersFixed: false,
   }));
@@ -58,7 +59,7 @@ export default function MatchSetup({ token }: MatchSetupProps) {
           isGoalkeeper: player.posicao === "GK",
           order: index,
         }));
-        setPlayers(mapped);
+        setPlayers(sortPlayersByOrder(mapped));
       } catch (err) {
         const message = err instanceof Error ? err.message : "Falha ao carregar jogadores.";
         setError(message);
@@ -112,6 +113,13 @@ export default function MatchSetup({ token }: MatchSetupProps) {
     setGeneratedResult(null);
   };
 
+  const handleManualOrderChange = (playerId: string, value: string) => {
+    const parsed = Number(value);
+    const nextOrder = Number.isNaN(parsed) ? 0 : Math.max(0, Math.floor(parsed - 1));
+    setPlayers((prev) => sortPlayersByOrder(prev.map((player) => (player.id === playerId ? { ...player, order: nextOrder } : player))));
+    setGeneratedResult(null);
+  };
+
   const presentPlayers = useMemo(() => players.filter((player) => player.isPresent), [players]);
   const presentCount = presentPlayers.length;
 
@@ -128,7 +136,6 @@ export default function MatchSetup({ token }: MatchSetupProps) {
         group_id: currentGroupId,
         titulo: matchForm.titulo.trim() || "Partida",
         starts_at: new Date(matchForm.startsAt).toISOString(),
-        local: matchForm.local?.trim() || undefined,
         team_size: matchForm.teamSize,
         goalkeepers_fixed: matchForm.goalkeepersFixed,
       };
@@ -323,16 +330,6 @@ export default function MatchSetup({ token }: MatchSetupProps) {
                 onChange={(event) => setMatchForm((prev) => ({ ...prev, startsAt: event.target.value }))}
               />
             </label>
-            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-              Local
-              <input
-                className={`${inputBase} mt-2`}
-                value={matchForm.local}
-                onChange={(event) => setMatchForm((prev) => ({ ...prev, local: event.target.value }))}
-                placeholder="Campo municipal"
-                maxLength={200}
-              />
-            </label>
             <div className="grid gap-3 md:grid-cols-2">
               <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
                 Tamanho dos times
@@ -465,7 +462,16 @@ export default function MatchSetup({ token }: MatchSetupProps) {
                     {player.nome}
                     {player.posicao === "GK" && <span className="ml-2 text-xs text-slate-400">(GK)</span>}
                   </p>
-                  <p className="text-xs text-slate-500">Ordem #{player.order + 1}</p>
+                  <label className="mt-1 flex items-center gap-2 text-xs text-slate-400">
+                    Ordem
+                    <input
+                      type="number"
+                      min={1}
+                      className="w-16 rounded-xl border border-slate-700 bg-slate-900 px-2 py-1 text-right text-xs text-white"
+                      value={player.order + 1}
+                      onChange={(event) => handleManualOrderChange(player.id, event.target.value)}
+                    />
+                  </label>
                 </div>
                 <button
                   type="button"
