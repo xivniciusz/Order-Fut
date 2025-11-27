@@ -57,6 +57,7 @@ def _serialize_match_player(entry: MatchPlayer, player: Player) -> schemas.Match
         is_present=entry.is_present,
         team_number=entry.team_number,
         order_position=entry.order_position,
+        has_played=entry.has_played,
     )
 
 
@@ -104,6 +105,9 @@ def _match_detail(match: Match, db: Session) -> schemas.MatchDetailResponse:
     )
     events = [_serialize_event_row(event, primary, assist) for event, primary, assist in event_rows]
 
+    active_numbers = [number for number in [match.active_team_one, match.active_team_two] if number]
+    waiting_numbers = match.team_queue or []
+
     return schemas.MatchDetailResponse(
         id=str(match.id),
         group_id=str(match.group_id),
@@ -117,6 +121,8 @@ def _match_detail(match: Match, db: Session) -> schemas.MatchDetailResponse:
         teams=teams,
         bench=bench,
         events=events,
+        active_team_numbers=active_numbers,
+        waiting_team_numbers=waiting_numbers,
     )
 
 
@@ -128,6 +134,55 @@ def _serialize_generated_player(entry: MatchPlayer, player: Player) -> schemas.G
         is_goalkeeper=entry.is_goalkeeper,
         order_position=entry.order_position,
     )
+
+
+def _get_waiting_teams(match: Match) -> list[int]:
+    return list(match.team_queue or [])
+
+
+def _rotate_team_state(match: Match, team_number: int, db: Session) -> None:
+    active_numbers = [number for number in [match.active_team_one, match.active_team_two] if number]
+    if team_number not in active_numbers:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Somente times em quadra podem ser rotacionados.")
+
+    queue = list(match.team_queue or [])
+    if not queue:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Nao existem times aguardando para entrar.")
+
+    incoming_team = queue.pop(0)
+    queue.append(team_number)
+
+    if match.active_team_one == team_number:
+        match.active_team_one = incoming_team
+    else:
+        match.active_team_two = incoming_team
+
+    match.team_queue = queue
+    _mark_team_as_played(match.id, incoming_team, db)
+
+
+def _mark_team_as_played(match_id: UUID, team_number: int, db: Session) -> None:
+    (
+        db.query(MatchPlayer)
+        .filter(
+            MatchPlayer.match_id == match_id,
+            MatchPlayer.team_number == team_number,
+            MatchPlayer.is_present.is_(True),
+        )
+        .update({MatchPlayer.has_played: True}, synchronize_session=False)
+    )
+
+
+def _handle_player_left(match: Match, player_entry: MatchPlayer, db: Session) -> None:
+    target_team = player_entry.team_number
+    active_numbers = [number for number in [match.active_team_one, match.active_team_two] if number]
+
+    if not target_team or target_team not in active_numbers:
+        player_entry.is_present = False
+        db.add(player_entry)
+        return
+
+    _rotate_team_state(match, target_team, db)
 
 
 @router.post("", response_model=schemas.MatchResponse, status_code=status.HTTP_201_CREATED)
@@ -240,9 +295,24 @@ def generate_match_teams(
         if entry.team_number is None:
             entry.team_number = 1
 
+    active_slots = [1]
+    if teams_count > 1:
+        active_slots.append(2)
+    waiting_slots = [number for number in range(1, teams_count + 1) if number not in active_slots]
+
+    for entry, _ in entries:
+        entry.has_played = False
+        if entry.team_number:
+            entry.is_present = True
+            if entry.team_number in active_slots:
+                entry.has_played = True
+
     match.team_size = team_size
     match.goalkeepers_fixed = goalkeepers_fixed
     match.generated_at = datetime.utcnow()
+    match.active_team_one = active_slots[0] if active_slots else None
+    match.active_team_two = active_slots[1] if len(active_slots) > 1 else None
+    match.team_queue = waiting_slots
     db.add(match)
     db.commit()
     for entry, _ in entries:
@@ -279,37 +349,10 @@ def rotate_team(
     match = _get_match_for_user(db, match_id, current_user.id)
 
     team_number = payload.team_number
-    losing_players = (
-        db.query(MatchPlayer)
-        .filter(MatchPlayer.match_id == match.id, MatchPlayer.team_number == team_number)
-        .order_by(MatchPlayer.order_position.asc())
-        .all()
-    )
-    bench_players = (
-        db.query(MatchPlayer)
-        .filter(
-            MatchPlayer.match_id == match.id,
-            MatchPlayer.team_number.is_(None),
-            MatchPlayer.is_present.is_(True),
-        )
-        .order_by(MatchPlayer.order_position.asc())
-        .all()
-    )
-
-    needed = max(len(losing_players), match.team_size)
-    if len(bench_players) < needed:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Nao ha jogadores suficientes na fila para substituir todo o time.")
-
-    for entry in losing_players:
-        entry.team_number = None
-
-    incoming = bench_players[:needed]
-    for entry in incoming:
-        entry.team_number = team_number
-
+    _rotate_team_state(match, team_number, db)
+    db.add(match)
     db.commit()
-    for entry in losing_players + incoming:
-        db.refresh(entry)
+    db.refresh(match)
     return _match_detail(match, db)
 
 
@@ -358,6 +401,22 @@ def create_event(
         description=payload.description,
     )
     db.add(event)
+
+    if event.tipo == ModelEventType.LEFT_FIELD:
+        if not player:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Informe o jogador que deixou o campo.")
+        player_entry = (
+            db.query(MatchPlayer)
+            .filter(MatchPlayer.match_id == match.id, MatchPlayer.player_id == player.id)
+            .first()
+        )
+        if not player_entry:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Jogador nao esta vinculado a esta partida.")
+        _handle_player_left(match, player_entry, db)
+
     db.commit()
     db.refresh(event)
+    if event.tipo == ModelEventType.LEFT_FIELD:
+        db.refresh(match)
+
     return _serialize_event_row(event, player, assist)

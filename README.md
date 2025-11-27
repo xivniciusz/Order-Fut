@@ -87,12 +87,12 @@ Depois de gerar os times, acompanhe o jogo em tempo real usando a nova aba **Par
 
 | Metodo | Rota                         | Descricao |
 | ------ | ---------------------------- | --------- |
-| GET    | `/matches/{id}`              | Retorna detalhe completo da sessao (times, fila e eventos). |
-| POST   | `/matches/{id}/next-team`    | Substitui todo o time informado pelo inicio da fila do banco. |
-| POST   | `/matches/{id}/finish`       | Marca a partida como finalizada e registra `finished_at`. |
-| POST   | `/events`                    | Registra gols, cartoes, assistencias, presencas ou substituicoes. |
+| GET    | `/matches/{id}`              | Retorna detalhe completo da sessao, indicando claramente os dois times ativos, a fila (ordem completa) e o banco solto. |
+| POST   | `/matches/{id}/next-team`    | Substitui todo o time informado pelo inicio da fila; apenas equipes em quadra podem ser rotacionadas. |
+| POST   | `/matches/{id}/finish`       | Marca a partida como finalizada e registra `finished_at` (necessario para as estatisticas contabilizarem o jogo). |
+| POST   | `/events`                    | Registra gols, cartoes, assistencias, substituicoes e o novo evento **"saiu"** (LEFT_FIELD), que dispara automaticamente a entrada do proximo time. |
 
-O componente React `MatchLive.tsx` agora oferece cronometro local com modos progressivo/regressivo, configuracao de duracao, aviso sonoro e alerta final, alem de calcular o placar a partir dos eventos e atualizar os dados a cada 10 segundos. Ele tambem renderiza quantos times tiverem sido gerados (placar, cards e botoes de rotacao) para acomodar jogos com rodizios maiores. Use o botao "Copiar ID" em `MatchSetup.tsx` para colar rapidamente na aba ao vivo.
+O componente React `MatchLive.tsx` agora opera com **apenas dois times em quadra**, destacando quem esta jogando e quem aguarda na fila. A fila funciona por equipes completas: ao registrar o evento "Saiu" ou clicar em "Retirar Time", a equipe deixa a quadra e a primeira da fila assume automaticamente, sempre preservando a ordem definida em `MatchSetup`. O cronometro passou a ser exclusivamente **regressivo**, com duracao configuravel, avisos sonoros (pre-alarme e fim) e travamento em `00:00` — ideal para validar quando uma partida realmente conta nas estatisticas. Continue usando o botao "Copiar ID" em `MatchSetup.tsx` para iniciar rapidamente a sessao ao vivo.
 
 ### Estatisticas do grupo
 
@@ -100,8 +100,8 @@ Novos endpoints disponibilizam consolidacao anual e historica usando as tabelas 
 
 | Metodo | Rota | Descricao |
 | ------ | ----- | --------- |
-| GET | `/stats/group/{group_id}?year=YYYY` | Agrega eventos por atleta, monta rankings (gols, assistencias, jogos), gera amostras mensais e retorna tanto o periodo filtrado quanto os totais gerais. |
-| GET | `/stats/player/{id}` | Retorna o resumo completo do atleta (totais, distribuicao por ano e ultimos jogos com gols/assistencias/cartoes). |
+| GET | `/stats/group/{group_id}?year=YYYY` | Agrega eventos por atleta, monta rankings (gols, assistencias, jogos), gera amostras mensais e retorna tanto o periodo filtrado quanto os totais gerais. Apenas partidas finalizadas entram no cômputo e cada jogador so conta se tiver sido marcado como `has_played`. |
+| GET | `/stats/player/{id}` | Retorna o resumo completo do atleta (totais, distribuicao por ano e ultimos jogos com gols/assistencias/cartoes), novamente considerando somente partidas finalizadas e atletas que de fato entraram em quadra. |
 
 Os retornos sao consumidos diretamente pela nova aba de estatisticas e podem ser reutilizados para relatórios externos.
 

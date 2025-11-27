@@ -223,6 +223,7 @@ class MatchDetailPlayer(BaseModel):
     is_present: bool
     team_number: Optional[int]
     order_position: int
+    has_played: bool
 
 
 class MatchDetailResponse(BaseModel):
@@ -238,6 +239,8 @@ class MatchDetailResponse(BaseModel):
     teams: dict[str, list[MatchDetailPlayer]]
     bench: list[MatchDetailPlayer]
     events: list["EventResponse"]
+    active_team_numbers: list[int]
+    waiting_team_numbers: list[int]
 
 
 class MatchCreateRequest(BaseModel):
@@ -297,9 +300,9 @@ class GenerateTeamsResponse(BaseModel):
 class EventType(str, Enum):
     GOAL = "goal"
     CARD = "card"
-    ATTENDANCE = "attendance"
     ASSIST = "assist"
     SUBSTITUTION = "substitution"
+    LEFT_FIELD = "left"
 
 
 class EventCreateRequest(BaseModel):

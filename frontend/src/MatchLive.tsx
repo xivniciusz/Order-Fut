@@ -15,17 +15,17 @@ export type MatchLiveProps = {
 const EVENT_LABELS: Record<EventType, string> = {
   goal: "Gol",
   card: "Cartao",
-  attendance: "Presenca",
   assist: "Assistencia",
   substitution: "Substituicao",
+  left: "Saiu",
 };
 
 const chipColors: Record<EventType, string> = {
   goal: "bg-emerald-500/10 text-emerald-200 border-emerald-500/40",
   card: "bg-amber-500/10 text-amber-200 border-amber-500/40",
-  attendance: "bg-slate-500/10 text-slate-200 border-slate-500/30",
   assist: "bg-sky-500/10 text-sky-200 border-sky-500/40",
   substitution: "bg-purple-500/10 text-purple-200 border-purple-500/40",
+  left: "bg-rose-500/10 text-rose-200 border-rose-500/40",
 };
 
 const sectionCard = "rounded-3xl border border-slate-800/60 bg-slate-900/50 p-5";
@@ -56,6 +56,7 @@ const EVENT_MANDATORY_PLAYER: Partial<Record<EventType, boolean>> = {
   card: true,
   assist: true,
   substitution: true,
+  left: true,
 };
 
 const EVENT_NEEDS_ASSIST: Partial<Record<EventType, boolean>> = {
@@ -76,16 +77,16 @@ export default function MatchLive({ token }: MatchLiveProps) {
   const [rotateLoading, setRotateLoading] = useState<number | null>(null);
   const [finishLoading, setFinishLoading] = useState(false);
   const [clockRunning, setClockRunning] = useState(false);
-  const [clockMode, setClockMode] = useState<"countup" | "countdown">("countup");
-  const [clockSeconds, setClockSeconds] = useState(0);
   const [countdownMinutesInput, setCountdownMinutesInput] = useState("10");
   const [warningSecondsInput, setWarningSecondsInput] = useState("60");
   const [countdownTargetSeconds, setCountdownTargetSeconds] = useState(600);
+  const [clockSeconds, setClockSeconds] = useState(600);
   const [warningSeconds, setWarningSeconds] = useState(60);
   const [audioEnabled, setAudioEnabled] = useState(true);
   const audioContextRef = useRef<AudioContext | null>(null);
   const warningPlayedRef = useRef(false);
   const endPlayedRef = useRef(false);
+  const lastMatchIdRef = useRef<string | null>(null);
 
   const [eventForm, setEventForm] = useState({
     tipo: "goal" as EventType,
@@ -133,32 +134,51 @@ export default function MatchLive({ token }: MatchLiveProps) {
     setEventForm((prev) => ({ ...prev, playerId: "", assistPlayerId: "" }));
   }, [eventForm.tipo]);
 
-  const availablePlayers: MatchDetailPlayer[] = useMemo(() => {
+  const activeTeams = useMemo(() => {
     if (!matchDetail) {
-      return [];
+      return [] as Array<[string, MatchDetailPlayer[]]>;
     }
-    const teams = Object.values(matchDetail.teams ?? {}).flat();
-    return [...teams, ...matchDetail.bench];
+    const activeNumbers = matchDetail.active_team_numbers ?? [];
+    return activeNumbers.map((teamNumber) => {
+      const key = String(teamNumber);
+      return [key, matchDetail.teams?.[key] ?? []] as [string, MatchDetailPlayer[]];
+    });
   }, [matchDetail]);
 
-  const fieldPlayers: MatchDetailPlayer[] = useMemo(() => {
+  const waitingTeams = useMemo(() => {
     if (!matchDetail) {
-      return [];
+      return [] as Array<[string, MatchDetailPlayer[]]>;
     }
-    return Object.values(matchDetail.teams ?? {}).flat();
+    const waitingNumbers = matchDetail.waiting_team_numbers ?? [];
+    return waitingNumbers.map((teamNumber) => {
+      const key = String(teamNumber);
+      return [key, matchDetail.teams?.[key] ?? []] as [string, MatchDetailPlayer[]];
+    });
   }, [matchDetail]);
 
-  const benchPlayers: MatchDetailPlayer[] = useMemo(() => (matchDetail ? matchDetail.bench : []), [matchDetail]);
+  const fieldPlayers: MatchDetailPlayer[] = useMemo(
+    () => activeTeams.flatMap(([, players]) => players),
+    [activeTeams],
+  );
+
+  const queuePlayers: MatchDetailPlayer[] = useMemo(
+    () => waitingTeams.flatMap(([, players]) => players),
+    [waitingTeams],
+  );
+
+  const looseBenchPlayers: MatchDetailPlayer[] = useMemo(() => matchDetail?.bench ?? [], [matchDetail]);
+
+  const benchPlayers: MatchDetailPlayer[] = useMemo(
+    () => [...queuePlayers, ...looseBenchPlayers],
+    [queuePlayers, looseBenchPlayers],
+  );
 
   const playerOptions = useMemo(() => {
-    if (!matchDetail) {
-      return [];
-    }
     if (eventForm.tipo === "substitution") {
       return [...fieldPlayers, ...benchPlayers];
     }
     return fieldPlayers;
-  }, [matchDetail, eventForm.tipo, fieldPlayers, benchPlayers]);
+  }, [eventForm.tipo, fieldPlayers, benchPlayers]);
 
   const assistOptions = useMemo(() => fieldPlayers, [fieldPlayers]);
 
@@ -178,7 +198,7 @@ export default function MatchLive({ token }: MatchLiveProps) {
       const teamNumber = Number(teamKey);
       players.forEach((player) => map.set(player.player_id, teamNumber));
     });
-    matchDetail.bench.forEach((player) => map.set(player.player_id, player.team_number));
+    (matchDetail.bench ?? []).forEach((player) => map.set(player.player_id, player.team_number));
     return map;
   }, [matchDetail]);
 
@@ -251,27 +271,16 @@ export default function MatchLive({ token }: MatchLiveProps) {
   }, [selectedMatchId, fetchMatch]);
 
   useEffect(() => {
-    if (!matchDetail) {
-      setClockRunning(false);
-      setClockSeconds(0);
-      resetAudioFlags();
+    const nextMatchId = matchDetail?.id ?? null;
+    const hasChanged = lastMatchIdRef.current !== nextMatchId;
+    if (!hasChanged) {
       return;
     }
+    lastMatchIdRef.current = nextMatchId;
     setClockRunning(false);
     resetAudioFlags();
-    if (clockMode === "countdown") {
-      setClockSeconds(countdownTargetSeconds);
-      return;
-    }
-    const startsAt = new Date(matchDetail.starts_at).getTime();
-    if (!Number.isNaN(startsAt)) {
-      const now = Date.now();
-      const diff = Math.max(0, Math.floor((now - startsAt) / 1000));
-      setClockSeconds(diff);
-    } else {
-      setClockSeconds(0);
-    }
-  }, [matchDetail?.starts_at, clockMode, countdownTargetSeconds, resetAudioFlags]);
+    setClockSeconds(countdownTargetSeconds);
+  }, [matchDetail?.id, countdownTargetSeconds, resetAudioFlags]);
 
   useEffect(() => {
     if (!clockRunning) {
@@ -279,26 +288,23 @@ export default function MatchLive({ token }: MatchLiveProps) {
     }
     const interval = setInterval(() => {
       setClockSeconds((prev) => {
-        if (clockMode === "countdown") {
-          const next = Math.max(prev - 1, 0);
-          if (warningSeconds > 0 && next === warningSeconds && !warningPlayedRef.current) {
-            playTone("warning");
-            warningPlayedRef.current = true;
-          }
-          if (next === 0) {
-            if (!endPlayedRef.current) {
-              playTone("end");
-              endPlayedRef.current = true;
-            }
-            setClockRunning(false);
-          }
-          return next;
+        const next = Math.max(prev - 1, 0);
+        if (warningSeconds > 0 && next === warningSeconds && !warningPlayedRef.current) {
+          playTone("warning");
+          warningPlayedRef.current = true;
         }
-        return prev + 1;
+        if (next === 0) {
+          if (!endPlayedRef.current) {
+            playTone("end");
+            endPlayedRef.current = true;
+          }
+          setClockRunning(false);
+        }
+        return next;
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [clockRunning, clockMode, warningSeconds, playTone]);
+  }, [clockRunning, warningSeconds, playTone]);
 
   const handleLoadMatch = () => fetchMatch(matchIdInput.trim());
 
@@ -378,11 +384,7 @@ export default function MatchLive({ token }: MatchLiveProps) {
   const handleResetClock = () => {
     setClockRunning(false);
     resetAudioFlags();
-    if (clockMode === "countdown") {
-      setClockSeconds(countdownTargetSeconds);
-      return;
-    }
-    setClockSeconds(0);
+    setClockSeconds(countdownTargetSeconds);
   };
 
   const handleApplyCountdown = () => {
@@ -395,7 +397,7 @@ export default function MatchLive({ token }: MatchLiveProps) {
     setWarningSecondsInput(String(warningValue));
     setCountdownTargetSeconds(totalSeconds);
     setWarningSeconds(warningValue);
-    if (clockMode === "countdown" && !clockRunning) {
+    if (!clockRunning) {
       setClockSeconds(totalSeconds);
       resetAudioFlags();
     }
@@ -497,24 +499,8 @@ export default function MatchLive({ token }: MatchLiveProps) {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded-2xl border border-slate-800/50 bg-slate-950/40 p-4 text-center">
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
-                <p className="uppercase tracking-[0.3em]">Cronometro</p>
-                <div className="flex gap-1">
-                  {(
-                    [
-                      { key: "countup", label: "Progressivo" },
-                      { key: "countdown", label: "Regressivo" },
-                    ] as const
-                  ).map((option) => (
-                    <button
-                      key={option.key}
-                      type="button"
-                      className={`rounded-2xl border px-3 py-1 ${clockMode === option.key ? "border-emerald-500 text-emerald-200" : "border-slate-700 text-slate-400"}`}
-                      onClick={() => setClockMode(option.key)}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
+                <p className="uppercase tracking-[0.3em]">Cronometro regressivo</p>
+                <span className="text-[0.65rem] text-slate-500">Tempo baseado na configuracao abaixo</span>
               </div>
               <p className="mt-3 text-4xl font-semibold text-white">{formatClock(clockSeconds)}</p>
               <div className="mt-4 flex flex-wrap justify-center gap-2 text-xs">
@@ -535,41 +521,39 @@ export default function MatchLive({ token }: MatchLiveProps) {
                   Reiniciar
                 </button>
               </div>
-              {clockMode === "countdown" && (
-                <div className="mt-4 space-y-2 text-left text-xs text-slate-400">
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <label className="space-y-1">
-                      <span className="block text-[0.6rem] uppercase tracking-[0.3em] text-slate-500">Duracao (min)</span>
-                      <input
-                        type="number"
-                        min={1}
-                        max={90}
-                        className="w-full rounded-2xl border border-slate-800/60 bg-slate-950/60 px-3 py-2 text-white"
-                        value={countdownMinutesInput}
-                        onChange={(event) => setCountdownMinutesInput(event.target.value)}
-                      />
-                    </label>
-                    <label className="space-y-1">
-                      <span className="block text-[0.6rem] uppercase tracking-[0.3em] text-slate-500">Aviso final (s)</span>
-                      <input
-                        type="number"
-                        min={0}
-                        className="w-full rounded-2xl border border-slate-800/60 bg-slate-950/60 px-3 py-2 text-white"
-                        value={warningSecondsInput}
-                        onChange={(event) => setWarningSecondsInput(event.target.value)}
-                      />
-                    </label>
-                  </div>
-                  <button
-                    type="button"
-                    className="w-full rounded-2xl border border-emerald-500/60 px-3 py-2 text-emerald-200"
-                    onClick={handleApplyCountdown}
-                  >
-                    Aplicar configuracao
-                  </button>
-                  <p className="text-[0.65rem] text-slate-500">Alertas soam no aviso configurado e quando o tempo zera.</p>
+              <div className="mt-4 space-y-2 text-left text-xs text-slate-400">
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <label className="space-y-1">
+                    <span className="block text-[0.6rem] uppercase tracking-[0.3em] text-slate-500">Duracao (min)</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={90}
+                      className="w-full rounded-2xl border border-slate-800/60 bg-slate-950/60 px-3 py-2 text-white"
+                      value={countdownMinutesInput}
+                      onChange={(event) => setCountdownMinutesInput(event.target.value)}
+                    />
+                  </label>
+                  <label className="space-y-1">
+                    <span className="block text-[0.6rem] uppercase tracking-[0.3em] text-slate-500">Aviso final (s)</span>
+                    <input
+                      type="number"
+                      min={0}
+                      className="w-full rounded-2xl border border-slate-800/60 bg-slate-950/60 px-3 py-2 text-white"
+                      value={warningSecondsInput}
+                      onChange={(event) => setWarningSecondsInput(event.target.value)}
+                    />
+                  </label>
                 </div>
-              )}
+                <button
+                  type="button"
+                  className="w-full rounded-2xl border border-emerald-500/60 px-3 py-2 text-emerald-200"
+                  onClick={handleApplyCountdown}
+                >
+                  Aplicar configuracao
+                </button>
+                <p className="text-[0.65rem] text-slate-500">Alertas soam no aviso configurado e quando o tempo zera.</p>
+              </div>
               <label className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-400">
                 <input
                   type="checkbox"
@@ -584,12 +568,32 @@ export default function MatchLive({ token }: MatchLiveProps) {
               <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Placar</p>
               {orderedTeams.length ? (
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  {orderedTeams.map(([teamKey]) => (
-                    <div key={teamKey} className="rounded-2xl border border-slate-800/70 bg-black/20 p-3">
-                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Time {teamKey}</p>
-                      <p className="mt-1 text-3xl font-semibold text-white">{scoreboard[teamKey] ?? 0}</p>
-                    </div>
-                  ))}
+                  {orderedTeams.map(([teamKey]) => {
+                    const teamNumber = Number(teamKey);
+                    const isActive = matchDetail?.active_team_numbers?.includes(teamNumber);
+                    const queueIndex = matchDetail?.waiting_team_numbers?.indexOf(teamNumber) ?? -1;
+                    return (
+                      <div
+                        key={teamKey}
+                        className={`rounded-2xl border bg-black/20 p-3 ${
+                          isActive
+                            ? "border-emerald-500/60"
+                            : queueIndex >= 0
+                              ? "border-slate-700"
+                              : "border-slate-800/70"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Time {teamKey}</p>
+                          {isActive && <span className="text-[0.65rem] uppercase tracking-[0.3em] text-emerald-400">Em quadra</span>}
+                          {!isActive && queueIndex >= 0 && (
+                            <span className="text-[0.65rem] text-slate-500">Fila #{queueIndex + 1}</span>
+                          )}
+                        </div>
+                        <p className="mt-1 text-3xl font-semibold text-white">{scoreboard[teamKey] ?? 0}</p>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="mt-3 text-xs text-slate-500">Nenhuma equipe escalada.</p>
@@ -598,17 +602,17 @@ export default function MatchLive({ token }: MatchLiveProps) {
             </div>
           </div>
           <div className="flex flex-wrap gap-3 text-xs">
-            {orderedTeams.map(([teamKey]) => {
-              const teamNumber = Number(teamKey);
+            {(matchDetail?.active_team_numbers ?? []).map((teamNumber) => {
+              const hasQueue = Boolean(matchDetail?.waiting_team_numbers?.length);
               return (
                 <button
-                  key={teamKey}
+                  key={teamNumber}
                   type="button"
                   onClick={() => handleRotateTeam(teamNumber)}
-                  disabled={!detailLoaded || !matchDetail?.bench.length || rotateLoading === teamNumber}
+                  disabled={!detailLoaded || !hasQueue || rotateLoading === teamNumber}
                   className="flex-1 rounded-2xl border border-slate-700 px-4 py-3 text-slate-200 disabled:opacity-50"
                 >
-                  {rotateLoading === teamNumber ? "Rotacionando..." : `Entrar Time ${teamKey}`}
+                  {rotateLoading === teamNumber ? "Rotacionando..." : `Retirar Time ${teamNumber}`}
                 </button>
               );
             })}
@@ -631,11 +635,11 @@ export default function MatchLive({ token }: MatchLiveProps) {
             <h3 className="text-lg font-semibold text-white">Escalacao atual</h3>
           </header>
           {detailLoaded ? (
-            orderedTeams.length ? (
+            activeTeams.length ? (
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {orderedTeams.map(([teamKey, players]) => (
-                  <div key={teamKey} className="rounded-2xl border border-slate-800/60 bg-slate-950/40 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Time {teamKey}</p>
+                {activeTeams.map(([teamKey, players]) => (
+                  <div key={teamKey} className="rounded-2xl border border-emerald-500/30 bg-slate-950/40 p-4">
+                    <p className="text-xs uppercase tracking-[0.3em] text-emerald-300">Time {teamKey}</p>
                     <ul className="mt-3 space-y-2 text-sm">
                       {players.length ? (
                         players.map((player) => (
@@ -652,7 +656,7 @@ export default function MatchLive({ token }: MatchLiveProps) {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-slate-500">Nenhum time foi gerado para esta partida.</p>
+              <p className="text-sm text-slate-500">Gere os times e comece a contagem regressiva para liberar a escala.</p>
             )
           ) : (
             <p className="text-sm text-slate-500">Carregue uma partida para visualizar as equipes.</p>
@@ -665,18 +669,48 @@ export default function MatchLive({ token }: MatchLiveProps) {
             <h3 className="text-lg font-semibold text-white">Quem aguarda entrar</h3>
           </header>
           {detailLoaded ? (
-            matchDetail?.bench.length ? (
-              <ul className="space-y-2 text-sm">
-                {matchDetail.bench.map((player) => (
-                  <li key={player.match_player_id} className="flex items-center justify-between rounded-2xl border border-slate-800/70 bg-black/20 px-4 py-2 text-slate-200">
-                    <div>
-                      <p className="font-semibold">{player.nome}</p>
-                      <p className="text-xs text-slate-500">Ordem #{player.order_position + 1}</p>
-                    </div>
-                    {player.team_number && <span className="text-xs text-slate-400">Preferencia: Time {player.team_number}</span>}
-                  </li>
-                ))}
-              </ul>
+            waitingTeams.length || looseBenchPlayers.length ? (
+              <div className="space-y-5 text-sm">
+                {waitingTeams.length ? (
+                  <div className="space-y-3">
+                    {waitingTeams.map(([teamKey, players], index) => (
+                      <div key={teamKey} className="rounded-2xl border border-slate-800/70 bg-black/15 p-4">
+                        <div className="flex items-center justify-between text-xs text-slate-400">
+                          <p className="uppercase tracking-[0.3em]">Time {teamKey}</p>
+                          <span>#{index + 1} na fila</span>
+                        </div>
+                        <ul className="mt-3 space-y-2">
+                          {players.length ? (
+                            players.map((player) => (
+                              <li key={player.match_player_id} className="rounded-2xl border border-slate-800/70 bg-slate-950/40 px-3 py-2 text-slate-200">
+                                <span className="font-semibold">{player.nome}</span>
+                                {player.has_played && <span className="ml-2 text-xs text-slate-400">Ja jogou</span>}
+                              </li>
+                            ))
+                          ) : (
+                            <li className="rounded-2xl border border-dashed border-slate-700 px-3 py-2 text-xs text-slate-500">Sem jogadores atribuídos.</li>
+                          )}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-500">Nenhum time aguarda para entrar.</p>
+                )}
+                {looseBenchPlayers.length ? (
+                  <div className="rounded-2xl border border-dashed border-slate-700 p-4">
+                    <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Jogadores sem time definido</p>
+                    <ul className="mt-3 space-y-2">
+                      {looseBenchPlayers.map((player) => (
+                        <li key={player.match_player_id} className="rounded-2xl border border-slate-800/70 bg-slate-950/40 px-3 py-2 text-slate-200">
+                          <span className="font-semibold">{player.nome}</span>
+                          <span className="ml-2 text-xs text-slate-400">Fila #{player.order_position + 1}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
             ) : (
               <p className="text-sm text-slate-500">Sem filas: todos os presentes estao em quadra.</p>
             )

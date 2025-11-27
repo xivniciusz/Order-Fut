@@ -47,7 +47,7 @@ export type GenerateTeamsResponse = {
   bench: GeneratedTeamPlayer[];
 };
 
-export type EventType = "goal" | "card" | "attendance" | "assist" | "substitution";
+export type EventType = "goal" | "card" | "assist" | "substitution" | "left";
 
 export type MatchDetailPlayer = {
   match_player_id: string;
@@ -57,6 +57,7 @@ export type MatchDetailPlayer = {
   is_present: boolean;
   team_number: number | null;
   order_position: number;
+  has_played: boolean;
 };
 
 export type EventResponse = {
@@ -84,6 +85,8 @@ export type MatchDetailResponse = {
   teams: Record<string, MatchDetailPlayer[]>;
   bench: MatchDetailPlayer[];
   events: EventResponse[];
+  active_team_numbers: number[];
+  waiting_team_numbers: number[];
 };
 
 export type EventCreatePayload = {

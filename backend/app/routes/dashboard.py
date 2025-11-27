@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from .. import schemas
 from ..database import get_session
 from ..dependencies import get_current_user
-from ..models import Event, EventType, Group, Match, MatchStatus, Player, User
+from ..models import Event, EventType, Group, Match, MatchPlayer, MatchStatus, Player, User
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
@@ -92,21 +92,36 @@ def stats_overview(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Grupo nao encontrado para este usuario.")
 
     total_players = int(db.query(func.count(Player.id)).filter(Player.group_id == group.id).scalar() or 0)
-    total_matches = int(db.query(func.count(Match.id)).filter(Match.group_id == group.id).scalar() or 0)
+    total_matches = int(
+        db.query(func.count(Match.id))
+        .filter(Match.group_id == group.id, Match.status == MatchStatus.FINISHED)
+        .scalar()
+        or 0
+    )
 
     event_counts = {
         row[0]: row[1]
         for row in (
             db.query(Event.tipo, func.count(Event.id))
             .join(Match, Match.id == Event.match_id)
-            .filter(Match.group_id == group.id)
+            .filter(Match.group_id == group.id, Match.status == MatchStatus.FINISHED)
             .group_by(Event.tipo)
             .all()
         )
     }
     goals = int(event_counts.get(EventType.GOAL, 0))
     cards = int(event_counts.get(EventType.CARD, 0))
-    attendance_entries = int(event_counts.get(EventType.ATTENDANCE, 0))
+    attendance_entries = int(
+        db.query(func.count(MatchPlayer.id))
+        .join(Match, Match.id == MatchPlayer.match_id)
+        .filter(
+            Match.group_id == group.id,
+            Match.status == MatchStatus.FINISHED,
+            MatchPlayer.has_played.is_(True),
+        )
+        .scalar()
+        or 0
+    )
 
     recent_matches = (
         db.query(Match)
@@ -120,7 +135,7 @@ def stats_overview(
         db.query(Player.id, Player.nome, func.count(Event.id).label("goals"))
         .join(Event, Event.player_id == Player.id)
         .join(Match, Match.id == Event.match_id)
-        .filter(Match.group_id == group.id, Event.tipo == EventType.GOAL)
+        .filter(Match.group_id == group.id, Match.status == MatchStatus.FINISHED, Event.tipo == EventType.GOAL)
         .group_by(Player.id, Player.nome)
         .order_by(func.count(Event.id).desc(), Player.nome.asc())
         .limit(5)

@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from .. import schemas
 from ..database import get_session
 from ..dependencies import get_current_user
-from ..models import Event, EventType, Group, Match, MatchPlayer, Player, User
+from ..models import Event, EventType, Group, Match, MatchPlayer, MatchStatus, Player, User
 
 router = APIRouter(prefix="/stats", tags=["stats"])
 
@@ -47,7 +47,11 @@ def _collect_match_counts(db: Session, group_id: UUID, year: int | None) -> dict
     query = (
         db.query(MatchPlayer.player_id, func.count(func.distinct(MatchPlayer.match_id)))
         .join(Match, Match.id == MatchPlayer.match_id)
-        .filter(Match.group_id == group_id, MatchPlayer.is_present.is_(True))
+        .filter(
+            Match.group_id == group_id,
+            Match.status == MatchStatus.FINISHED,
+            MatchPlayer.has_played.is_(True),
+        )
     )
     if year:
         query = query.filter(func.date_part("year", Match.starts_at) == year)
@@ -150,14 +154,24 @@ def group_stats(
     if year:
         matches_period_total = int(
             db.query(func.count(Match.id))
-            .filter(Match.group_id == group.id)
+            .filter(Match.group_id == group.id, Match.status == MatchStatus.FINISHED)
             .filter(func.date_part("year", Match.starts_at) == year)
             .scalar()
             or 0
         )
     else:
-        matches_period_total = int(db.query(func.count(Match.id)).filter(Match.group_id == group.id).scalar() or 0)
-    matches_all_time_total = int(db.query(func.count(Match.id)).filter(Match.group_id == group.id).scalar() or 0)
+        matches_period_total = int(
+            db.query(func.count(Match.id))
+            .filter(Match.group_id == group.id, Match.status == MatchStatus.FINISHED)
+            .scalar()
+            or 0
+        )
+    matches_all_time_total = int(
+        db.query(func.count(Match.id))
+        .filter(Match.group_id == group.id, Match.status == MatchStatus.FINISHED)
+        .scalar()
+        or 0
+    )
 
     players_stats = []
     for player in players:
@@ -207,13 +221,13 @@ def group_stats(
     chart_match_query = (
         db.query(func.date_trunc("month", Match.starts_at).label("month"), func.count(Match.id))
         .select_from(Match)
-        .filter(Match.group_id == group.id)
+        .filter(Match.group_id == group.id, Match.status == MatchStatus.FINISHED)
     )
     chart_goal_query = (
         db.query(func.date_trunc("month", Match.starts_at).label("month"), func.count(Event.id))
         .select_from(Match)
         .join(Event, Event.match_id == Match.id)
-        .filter(Match.group_id == group.id, Event.tipo == EventType.GOAL)
+        .filter(Match.group_id == group.id, Match.status == MatchStatus.FINISHED, Event.tipo == EventType.GOAL)
     )
     if year:
         chart_match_query = chart_match_query.filter(func.date_part("year", Match.starts_at) == year)
@@ -288,7 +302,12 @@ def player_stats(
         cards=_count_events((Event.player_id == player.id) & (Event.tipo == EventType.CARD)),
         matches=int(
             db.query(func.count(func.distinct(MatchPlayer.match_id)))
-            .filter(MatchPlayer.player_id == player.id, MatchPlayer.is_present.is_(True))
+            .join(Match, Match.id == MatchPlayer.match_id)
+            .filter(
+                MatchPlayer.player_id == player.id,
+                MatchPlayer.has_played.is_(True),
+                Match.status == MatchStatus.FINISHED,
+            )
             .scalar()
             or 0
         ),
@@ -332,7 +351,11 @@ def player_stats(
     match_rows = (
         db.query(func.date_part("year", Match.starts_at).label("year"), func.count(func.distinct(MatchPlayer.match_id)))
         .join(Match, Match.id == MatchPlayer.match_id)
-        .filter(MatchPlayer.player_id == player.id, MatchPlayer.is_present.is_(True))
+        .filter(
+            MatchPlayer.player_id == player.id,
+            MatchPlayer.has_played.is_(True),
+            Match.status == MatchStatus.FINISHED,
+        )
         .group_by("year")
         .all()
     )
@@ -356,7 +379,11 @@ def player_stats(
     recent_matches = (
         db.query(Match.id, Match.titulo, Match.starts_at)
         .join(MatchPlayer, MatchPlayer.match_id == Match.id)
-        .filter(MatchPlayer.player_id == player.id, MatchPlayer.is_present.is_(True))
+        .filter(
+            MatchPlayer.player_id == player.id,
+            MatchPlayer.has_played.is_(True),
+            Match.status == MatchStatus.FINISHED,
+        )
         .order_by(Match.starts_at.desc())
         .limit(8)
         .all()

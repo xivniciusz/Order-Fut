@@ -118,6 +118,9 @@ class Match(Base):
     generated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    active_team_one: Mapped[int | None] = mapped_column(Integer)
+    active_team_two: Mapped[int | None] = mapped_column(Integer)
+    team_queue: Mapped[list[int] | None] = mapped_column(JSON, default=list)
 
     group: Mapped[Group] = relationship("Group", back_populates="matches")
     events: Mapped[list["Event"]] = relationship("Event", back_populates="match", cascade="all, delete-orphan")
@@ -127,9 +130,9 @@ class Match(Base):
 class EventType(str, PyEnum):
     GOAL = "goal"
     CARD = "card"
-    ATTENDANCE = "attendance"
     ASSIST = "assist"
     SUBSTITUTION = "substitution"
+    LEFT_FIELD = "left"
 
 
 class Event(Base):
@@ -160,6 +163,7 @@ class MatchPlayer(Base):
     order_position: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     team_number: Mapped[int | None] = mapped_column(Integer)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    has_played: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     match: Mapped[Match] = relationship("Match", back_populates="match_players")
     player: Mapped[Player] = relationship("Player", back_populates="match_entries")
