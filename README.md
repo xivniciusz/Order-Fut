@@ -94,6 +94,17 @@ Depois de gerar os times, acompanhe o jogo em tempo real usando a nova aba **Par
 
 O componente React `MatchLive.tsx` agora oferece cronometro local com modos progressivo/regressivo, configuracao de duracao, aviso sonoro e alerta final, alem de calcular o placar a partir dos eventos e atualizar os dados a cada 10 segundos. Ele tambem renderiza quantos times tiverem sido gerados (placar, cards e botoes de rotacao) para acomodar jogos com rodizios maiores. Use o botao "Copiar ID" em `MatchSetup.tsx` para colar rapidamente na aba ao vivo.
 
+### Estatisticas do grupo
+
+Novos endpoints disponibilizam consolidacao anual e historica usando as tabelas `players`, `matches` e `events`:
+
+| Metodo | Rota | Descricao |
+| ------ | ----- | --------- |
+| GET | `/stats/group/{group_id}?year=YYYY` | Agrega eventos por atleta, monta rankings (gols, assistencias, jogos), gera amostras mensais e retorna tanto o periodo filtrado quanto os totais gerais. |
+| GET | `/stats/player/{id}` | Retorna o resumo completo do atleta (totais, distribuicao por ano e ultimos jogos com gols/assistencias/cartoes). |
+
+Os retornos sao consumidos diretamente pela nova aba de estatisticas e podem ser reutilizados para relatórios externos.
+
 > **Migracoes:** rode o script `backend/live_match_migration.sql` no seu banco PostgreSQL para garantir que colunas (`team_size`, `goalkeepers_fixed`, `generated_at`, `finished_at`, `assist_player_id`, `description`) e a tabela `match_players` existam antes de usar o modo ao vivo.
 
 ## Frontend (React + Vite + Tailwind)
@@ -119,6 +130,7 @@ O componente React `MatchLive.tsx` agora oferece cronometro local com modos prog
 - Nova aba **Grupos** (dentro do dashboard) oferece CRUD completo: lista responsiva, botao "Criar grupo", botoes "Definir como ativo", modais de edicao/confirmacao de exclusao e atalho "Jogadores" para navegar para a tela de elenco.
 - Aba **Jogadores** exibe o componente `Players.tsx`, com selecao de grupo, busca textual, filtro por posicao, cards com avatar inicial e modais para criar/editar/excluir atletas, todos alimentados pelo `playersApi.ts`.
 - Aba **Organizacao** traz o componente `MatchSetup.tsx`, com interface dark/light para configurar a partida, marcar presencas, alternar goleiros, ordenar a fila via drag and drop e acionar o botao **Gerar Times**. A integracao usa `matchesApi.ts` para criar a sessao, sincronizar jogadores e solicitar a distribuicao automatica (a tela exibe os times e o banco de reservas resultantes).
+- Aba **Estatisticas** utiliza `Stats.tsx` + `statsApi.ts` para buscar os novos endpoints com cache em memoria. A tela exibe cards de ranking (gols/assistencias/jogos), seletor anual, grafico descritivo de tendencia, resumo comparando periodo x historico, tabela responsiva com todos os atletas (destacando o top 5) e um painel lateral que carrega os detalhes do jogador (com skeletons e atualizacao dinamica).
 - Componentes/servicos principais:
    - `ActiveGroupContext.tsx` agora respeita o estado `is_active` retornado pelo backend para priorizar o grupo certo.
    - `groupsApi.ts` centraliza chamadas autenticadas (`GET/POST/PUT/DELETE/POST set-active`).

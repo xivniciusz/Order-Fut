@@ -169,6 +169,25 @@ class TopScorer(BaseModel):
     goals: int
 
 
+class StatLine(BaseModel):
+    goals: int
+    assists: int
+    cards: int
+    matches: int
+
+
+class RankingEntry(BaseModel):
+    player_id: str
+    player_nome: str
+    value: int
+
+
+class RankingBlock(BaseModel):
+    goals: list[RankingEntry]
+    assists: list[RankingEntry]
+    matches: list[RankingEntry]
+
+
 class StatsOverviewResponse(BaseModel):
     group: SelectedGroup
     totals: StatsTotals
@@ -291,3 +310,59 @@ class FinishMatchResponse(BaseModel):
     id: str
     status: str
     finished_at: datetime
+
+
+class PlayerHeadline(BaseModel):
+    id: str
+    nome: str
+    numero_camisa: Optional[int]
+    posicao: Optional[str]
+
+
+class PlayerStatSnapshot(BaseModel):
+    player_id: str
+    nome: str
+    numero_camisa: Optional[int]
+    posicao: Optional[str]
+    period: StatLine
+    all_time: StatLine
+
+
+class ChartPoint(BaseModel):
+    label: str
+    goals: int
+    matches: int
+
+
+class GroupStatsResponse(BaseModel):
+    group: SelectedGroup
+    filter_year: Optional[int]
+    available_years: list[int]
+    totals_period: StatLine
+    totals_all_time: StatLine
+    rankings: RankingBlock
+    chart: list[ChartPoint]
+    players: list[PlayerStatSnapshot]
+    generated_at: datetime
+
+
+class PlayerYearBreakdown(BaseModel):
+    year: int
+    totals: StatLine
+
+
+class PlayerMatchSnapshot(BaseModel):
+    match_id: str
+    titulo: str
+    starts_at: datetime
+    goals: int
+    assists: int
+    cards: int
+
+
+class PlayerStatsResponse(BaseModel):
+    player: PlayerHeadline
+    group: SelectedGroup
+    totals: StatLine
+    per_year: list[PlayerYearBreakdown]
+    recent_matches: list[PlayerMatchSnapshot]

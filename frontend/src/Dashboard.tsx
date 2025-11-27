@@ -6,6 +6,7 @@ import Groups from "./Groups";
 import MatchLive from "./MatchLive";
 import MatchSetup from "./MatchSetup";
 import Players from "./Players";
+import Stats from "./Stats";
 
 export type DashboardProps = {
   auth: AuthResponse;
@@ -262,7 +263,7 @@ function DashboardBody({ auth }: { auth: AuthResponse }) {
 
 export default function Dashboard({ auth, onLogout }: DashboardProps) {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [view, setView] = useState<"overview" | "groups" | "players" | "organize" | "live">("overview");
+  const [view, setView] = useState<"overview" | "groups" | "players" | "organize" | "live" | "stats">("overview");
   const [playersGroupId, setPlayersGroupId] = useState<string | null>(null);
   const themeClasses = theme === "dark" ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-900";
 
@@ -357,6 +358,17 @@ export default function Dashboard({ auth, onLogout }: DashboardProps) {
                 </button>
                 <button
                   type="button"
+                  onClick={() => setView("stats")}
+                  className={`rounded-2xl px-4 py-2 text-xs font-semibold transition ${
+                    view === "stats"
+                      ? "bg-emerald-500 text-emerald-950 shadow-lg shadow-emerald-500/30"
+                      : "border border-slate-700 text-slate-300"
+                  }`}
+                >
+                  Estatisticas
+                </button>
+                <button
+                  type="button"
                   onClick={() => setView("live")}
                   className={`rounded-2xl px-4 py-2 text-xs font-semibold transition ${
                     view === "live"
@@ -373,6 +385,7 @@ export default function Dashboard({ auth, onLogout }: DashboardProps) {
                 <Players token={auth.access_token} initialGroupId={playersGroupId} onBack={handlePlayersBack} />
               )}
               {view === "organize" && <MatchSetup token={auth.access_token} />}
+              {view === "stats" && <Stats token={auth.access_token} />}
               {view === "live" && <MatchLive token={auth.access_token} />}
             </div>
           </main>

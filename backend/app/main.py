@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from .config import settings
 from .database import Base, engine, get_session
-from .routes import auth, dashboard, groups, matches, players
+from .routes import auth, dashboard, groups, matches, players, stats
 
 app = FastAPI(title=settings.app_name, debug=settings.debug)
 
@@ -28,6 +28,7 @@ app.include_router(players.router)
 app.include_router(matches.router)
 app.include_router(matches.events_router)
 app.include_router(dashboard.router)
+app.include_router(stats.router)
 
 
 @app.get("/health", tags=["saude"])
