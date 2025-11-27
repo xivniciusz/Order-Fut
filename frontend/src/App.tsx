@@ -4,12 +4,14 @@ type HealthResponse = {
   status: string;
 };
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
+
 function App() {
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("http://localhost:8000/health")
+    fetch(`${API_BASE_URL}/health`)
       .then((res) => res.json())
       .then((data: HealthResponse) => setHealth(data))
       .catch(() => setError("Nao foi possivel conectar ao backend."));

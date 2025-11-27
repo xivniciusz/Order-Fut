@@ -38,6 +38,12 @@ Dependencias principais ja listadas no `pyproject.toml`:
    npm run dev
    ```
 
+Configure o backend usado no fetch criando `frontend/.env` a partir do `.env.example`:
+```
+VITE_API_BASE_URL=https://order-fut.onrender.com
+```
+Localmente voce pode manter `http://localhost:8000`.
+
 Pacotes ja configurados em `package.json`:
 - `react` e `react-dom`
 - `vite` e `@vitejs/plugin-react`
