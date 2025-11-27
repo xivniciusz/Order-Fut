@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from .config import settings
 from .database import Base, engine, get_session
-from .routes import auth, dashboard, groups, players
+from .routes import auth, dashboard, groups, matches, players
 
 app = FastAPI(title=settings.app_name, debug=settings.debug)
 
@@ -25,6 +25,7 @@ def init_database() -> None:
 app.include_router(auth.router)
 app.include_router(groups.router)
 app.include_router(players.router)
+app.include_router(matches.router)
 app.include_router(dashboard.router)
 
 

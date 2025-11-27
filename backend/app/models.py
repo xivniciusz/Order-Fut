@@ -88,6 +88,7 @@ class Player(Base):
 
     group: Mapped[Group] = relationship("Group", back_populates="players")
     events: Mapped[list["Event"]] = relationship("Event", back_populates="player")
+    match_entries: Mapped[list["MatchPlayer"]] = relationship("MatchPlayer", back_populates="player", cascade="all, delete-orphan")
 
 
 class MatchStatus(str, PyEnum):
@@ -107,10 +108,14 @@ class Match(Base):
     status: Mapped[MatchStatus] = mapped_column(SAEnum(MatchStatus), default=MatchStatus.SCHEDULED, nullable=False)
     placar_pro: Mapped[int | None] = mapped_column(Integer)
     placar_contra: Mapped[int | None] = mapped_column(Integer)
+    team_size: Mapped[int] = mapped_column(Integer, nullable=False, default=5)
+    goalkeepers_fixed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    generated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
 
     group: Mapped[Group] = relationship("Group", back_populates="matches")
     events: Mapped[list["Event"]] = relationship("Event", back_populates="match", cascade="all, delete-orphan")
+    match_players: Mapped[list["MatchPlayer"]] = relationship("MatchPlayer", back_populates="match", cascade="all, delete-orphan")
 
 
 class EventType(str, PyEnum):
@@ -131,3 +136,19 @@ class Event(Base):
 
     match: Mapped[Match] = relationship("Match", back_populates="events")
     player: Mapped[Player | None] = relationship("Player", back_populates="events")
+
+
+class MatchPlayer(Base):
+    __tablename__ = "match_players"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=default_uuid)
+    match_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("matches.id", ondelete="CASCADE"), index=True)
+    player_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("players.id", ondelete="CASCADE"), index=True)
+    is_present: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_goalkeeper: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    order_position: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    team_number: Mapped[int | None] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+
+    match: Mapped[Match] = relationship("Match", back_populates="match_players")
+    player: Mapped[Player] = relationship("Player", back_populates="match_entries")

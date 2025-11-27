@@ -69,6 +69,18 @@ Endpoints autenticados para montar a tela de elenco. Todos exigem o `group_id` p
 
 Os schemas correspondentes estao em `backend/app/schemas.py` (`PlayerCreate`, `PlayerUpdate`, `PlayerResponse`, `PlayerPosition`) e o roteador completo em `backend/app/routes/players.py`.
 
+### Organizacao de partidas
+
+Fluxo novo para planejar jogos/treinos, controlar presenca e gerar times equilibrados. Todos os endpoints exigem token JWT:
+
+| Metodo | Rota                              | Descricao |
+| ------ | --------------------------------- | --------- |
+| POST   | `/matches`                        | Cria uma sessao de partida a partir de um `group_id`, definindo titulo, data/hora, local, tamanho dos times e se os goleiros devem ficar fixos. |
+| POST   | `/matches/{id}/players`           | Sincroniza toda a lista de jogadores daquele grupo com status de presenca, marcacao de goleiro e ordem de chegada (drag and drop). |
+| POST   | `/matches/{id}/generate-teams`    | Valida se ha atletas suficientes e gera automaticamente dois times + banco seguindo a ordem cadastrada e, opcionalmente, respeitando goleiros fixos. |
+
+Novos modelos estao em `backend/app/models.py`: `Match` agora possui `team_size`, `goalkeepers_fixed` e `generated_at`, e a tabela `match_players` armazena presenca, ordem e time final. Os DTOs (`MatchCreateRequest`, `MatchPlayersSyncRequest`, `GenerateTeamsResponse` etc.) estao em `backend/app/schemas.py`, enquanto o fluxo completo vive em `backend/app/routes/matches.py`.
+
 ## Frontend (React + Vite + Tailwind)
 
 1. Instale dependencias com npm ou pnpm (exemplo com npm):
@@ -91,16 +103,20 @@ Os schemas correspondentes estao em `backend/app/schemas.py` (`PlayerCreate`, `P
    - Alternancia manual de tema (claro/escuro) com Tailwind em modo `class`.
 - Nova aba **Grupos** (dentro do dashboard) oferece CRUD completo: lista responsiva, botao "Criar grupo", botoes "Definir como ativo", modais de edicao/confirmacao de exclusao e atalho "Jogadores" para navegar para a tela de elenco.
 - Aba **Jogadores** exibe o componente `Players.tsx`, com selecao de grupo, busca textual, filtro por posicao, cards com avatar inicial e modais para criar/editar/excluir atletas, todos alimentados pelo `playersApi.ts`.
+- Aba **Organizacao** traz o componente `MatchSetup.tsx`, com interface dark/light para configurar a partida, marcar presencas, alternar goleiros, ordenar a fila via drag and drop e acionar o botao **Gerar Times**. A integracao usa `matchesApi.ts` para criar a sessao, sincronizar jogadores e solicitar a distribuicao automatica (a tela exibe os times e o banco de reservas resultantes).
 - Componentes/servicos principais:
    - `ActiveGroupContext.tsx` agora respeita o estado `is_active` retornado pelo backend para priorizar o grupo certo.
    - `groupsApi.ts` centraliza chamadas autenticadas (`GET/POST/PUT/DELETE/POST set-active`).
    - `Groups.tsx` (pedida como *Groups.jsx*, implementada em TSX para manter o padrao do projeto) renderiza cards, valida formularios e reutiliza o contexto para sincronizar o dashboard.
    - `playersApi.ts` encapsula as chamadas `GET/POST/PUT/DELETE` para `/players`, aplicando timeout e mensagens amigaveis.
    - `Players.tsx` controla filtros, estado de modais, validacao de formularios e sincroniza selecao de grupo com o `ActiveGroupProvider` para manter o dashboard coerente.
+   - `matchesApi.ts` organiza as chamadas `POST /matches`, `/matches/{id}/players` e `/matches/{id}/generate-teams` com timeouts padronizados.
+   - `MatchSetup.tsx` concentra toda a logica de estado (formulario, toggle de goleiro, drag and drop usando eventos nativos, validacao minima de jogadores, mensagens de erro/sucesso e rendering responsivo dos cards de times).
 - Para testar manualmente:
    1. Faca login/cadastro e copie o token exibido na sessao.
    2. Popule as tabelas no Postgres (players, matches, events) para alimentar os cards.
    3. Utilize a acao "Sincronizar" ou recarregue a pagina para refazer os fetches; na aba Grupos, acione os botoes de criar/editar/excluir/ativar.
+   4. Acesse a aba Organizacao, selecione um grupo, crie a sessao, marque presencas e pressione "Gerar times" para validar o fluxo completo.
 
 Configure o backend usado no fetch criando `frontend/.env` a partir do `.env.example`:
 ```
@@ -121,6 +137,11 @@ Tailwind ja esta ligado em `tailwind.config.js` e `src/index.css`.
 Instale o PostgreSQL localmente (pode ser via instalador oficial) e garanta que o servico esteja ativo.
 Crie um banco chamado `order_fut` e ajuste usuario/senha conforme desejar.
 Depois atualize `DATABASE_URL` no backend para refletir host, porta e credenciais escolhidas.
+
+Novas tabelas/colunas criadas para a organizacao da partida:
+
+- `matches`: guarda titulo, local, data/hora, tamanho do time, configuracao de goleiro (`goalkeepers_fixed`) e timestamps (`created_at`, `generated_at`).
+- `match_players`: linha para cada atleta convidado, com flags `is_present`, `is_goalkeeper`, `order_position` e o `team_number` atribuido apos a geracao.
 
 ## Fluxo sugerido
 

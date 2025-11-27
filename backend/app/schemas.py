@@ -174,3 +174,57 @@ class StatsOverviewResponse(BaseModel):
     totals: StatsTotals
     recent_matches: list[RecentMatchSummary]
     top_scorers: list[TopScorer]
+
+
+class MatchCreateRequest(BaseModel):
+    group_id: str
+    titulo: str = Field(min_length=3, max_length=160)
+    starts_at: datetime
+    local: Optional[str] = Field(default=None, max_length=200)
+    team_size: int = Field(default=5, ge=2, le=11)
+    goalkeepers_fixed: bool = False
+
+
+class MatchResponse(BaseModel):
+    id: str
+    group_id: str
+    titulo: str
+    starts_at: datetime
+    local: Optional[str]
+    team_size: int
+    goalkeepers_fixed: bool
+    created_at: datetime
+
+
+class MatchPlayerSync(BaseModel):
+    player_id: str
+    is_present: bool
+    is_goalkeeper: bool = False
+    order_position: int = Field(ge=0, le=999)
+
+
+class MatchPlayersSyncRequest(BaseModel):
+    players: list[MatchPlayerSync]
+
+
+class GenerateTeamsRequest(BaseModel):
+    team_size: Optional[int] = Field(default=None, ge=2, le=11)
+    goalkeepers_fixed: Optional[bool] = None
+
+
+class GeneratedTeamPlayer(BaseModel):
+    match_player_id: str
+    player_id: str
+    nome: str
+    is_goalkeeper: bool
+    order_position: int
+
+
+class GeneratedTeam(BaseModel):
+    team_number: int
+    players: list[GeneratedTeamPlayer]
+
+
+class GenerateTeamsResponse(BaseModel):
+    teams: list[GeneratedTeam]
+    bench: list[GeneratedTeamPlayer]

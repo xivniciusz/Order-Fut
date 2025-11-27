@@ -3,6 +3,7 @@ import type { AuthResponse } from "./api";
 import { ActiveGroupProvider, useActiveGroup } from "./ActiveGroupContext";
 import type { ActiveGroupSummary, RecentMatchSummary, TopScorer } from "./dashboardApi";
 import Groups from "./Groups";
+import MatchSetup from "./MatchSetup";
 import Players from "./Players";
 
 export type DashboardProps = {
@@ -260,7 +261,7 @@ function DashboardBody({ auth }: { auth: AuthResponse }) {
 
 export default function Dashboard({ auth, onLogout }: DashboardProps) {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [view, setView] = useState<"overview" | "groups" | "players">("overview");
+  const [view, setView] = useState<"overview" | "groups" | "players" | "organize">("overview");
   const [playersGroupId, setPlayersGroupId] = useState<string | null>(null);
   const themeClasses = theme === "dark" ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-900";
 
@@ -342,12 +343,24 @@ export default function Dashboard({ auth, onLogout }: DashboardProps) {
                 >
                   Jogadores
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setView("organize")}
+                  className={`rounded-2xl px-4 py-2 text-xs font-semibold transition ${
+                    view === "organize"
+                      ? "bg-emerald-500 text-emerald-950 shadow-lg shadow-emerald-500/30"
+                      : "border border-slate-700 text-slate-300"
+                  }`}
+                >
+                  Organizacao
+                </button>
               </div>
               {view === "overview" && <DashboardBody auth={auth} />}
               {view === "groups" && <Groups token={auth.access_token} onNavigateToPlayers={navigateToPlayers} />}
               {view === "players" && (
                 <Players token={auth.access_token} initialGroupId={playersGroupId} onBack={handlePlayersBack} />
               )}
+              {view === "organize" && <MatchSetup token={auth.access_token} />}
             </div>
           </main>
         </div>
