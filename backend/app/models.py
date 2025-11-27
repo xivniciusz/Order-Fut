@@ -87,7 +87,11 @@ class Player(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
 
     group: Mapped[Group] = relationship("Group", back_populates="players")
-    events: Mapped[list["Event"]] = relationship("Event", back_populates="player")
+    events: Mapped[list["Event"]] = relationship(
+        "Event",
+        back_populates="player",
+        foreign_keys=lambda: [Event.player_id],
+    )
     match_entries: Mapped[list["MatchPlayer"]] = relationship("MatchPlayer", back_populates="player", cascade="all, delete-orphan")
 
 
