@@ -247,6 +247,18 @@ export default function MatchSetup({ token }: MatchSetupProps) {
     );
   };
 
+  const handleCopyMatchId = useCallback(async () => {
+    if (!matchId) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(matchId);
+      setStatusMessage("ID da partida copiado. Abra a aba 'Partida ao vivo' para acompanhar em tempo real.");
+    } catch {
+      setError("Nao foi possivel copiar automaticamente. Copie o ID manualmente.");
+    }
+  }, [matchId]);
+
   return (
     <section className="space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-4">
@@ -263,6 +275,22 @@ export default function MatchSetup({ token }: MatchSetupProps) {
 
       {error && <p className="rounded-3xl border border-rose-500/40 bg-rose-500/10 px-4 py-2 text-sm text-rose-200">{error}</p>}
       {statusMessage && <p className="rounded-3xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-200">{statusMessage}</p>}
+      {matchId && (
+        <div className="rounded-3xl border border-emerald-500/40 bg-emerald-500/5 px-5 py-4 text-sm text-emerald-100">
+          <p className="text-xs uppercase tracking-[0.4em] text-emerald-300">Sessao ativa</p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <code className="rounded-2xl bg-emerald-500/10 px-3 py-2 text-xs font-mono text-emerald-100">{matchId}</code>
+            <button
+              type="button"
+              onClick={handleCopyMatchId}
+              className="rounded-2xl border border-emerald-400/70 px-4 py-2 text-xs font-semibold text-emerald-200"
+            >
+              Copiar ID
+            </button>
+            <span className="text-xs text-emerald-200">Use na aba "Partida ao vivo" para controlar o jogo.</span>
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className={sectionCard}>

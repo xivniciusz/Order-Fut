@@ -81,6 +81,21 @@ Fluxo novo para planejar jogos/treinos, controlar presenca e gerar times equilib
 
 Novos modelos estao em `backend/app/models.py`: `Match` agora possui `team_size`, `goalkeepers_fixed` e `generated_at`, e a tabela `match_players` armazena presenca, ordem e time final. Os DTOs (`MatchCreateRequest`, `MatchPlayersSyncRequest`, `GenerateTeamsResponse` etc.) estao em `backend/app/schemas.py`, enquanto o fluxo completo vive em `backend/app/routes/matches.py`.
 
+### Partida ao vivo
+
+Depois de gerar os times, acompanhe o jogo em tempo real usando a nova aba **Partida ao vivo** do dashboard. Nela voce informa o `match_id` (copie direto do card exibido em `MatchSetup`) e passa a registrar eventos, rotacionar times e encerrar a partida. A UI consome os endpoints abaixo:
+
+| Metodo | Rota                         | Descricao |
+| ------ | ---------------------------- | --------- |
+| GET    | `/matches/{id}`              | Retorna detalhe completo da sessao (times, fila e eventos). |
+| POST   | `/matches/{id}/next-team`    | Substitui todo o time informado pelo inicio da fila do banco. |
+| POST   | `/matches/{id}/finish`       | Marca a partida como finalizada e registra `finished_at`. |
+| POST   | `/events`                    | Registra gols, cartoes, assistencias, presencas ou substituicoes. |
+
+O componente React `MatchLive.tsx` controla cronometro local, placar calculado a partir dos eventos e atualizacao automatica a cada 10 segundos. Use o botao "Copiar ID" em `MatchSetup.tsx` para colar rapidamente na aba ao vivo.
+
+> **Migracoes:** rode o script `backend/live_match_migration.sql` no seu banco PostgreSQL para garantir que colunas (`team_size`, `goalkeepers_fixed`, `generated_at`, `finished_at`, `assist_player_id`, `description`) e a tabela `match_players` existam antes de usar o modo ao vivo.
+
 ## Frontend (React + Vite + Tailwind)
 
 1. Instale dependencias com npm ou pnpm (exemplo com npm):

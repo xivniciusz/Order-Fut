@@ -26,6 +26,7 @@ app.include_router(auth.router)
 app.include_router(groups.router)
 app.include_router(players.router)
 app.include_router(matches.router)
+app.include_router(matches.events_router)
 app.include_router(dashboard.router)
 
 

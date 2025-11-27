@@ -3,6 +3,7 @@ import type { AuthResponse } from "./api";
 import { ActiveGroupProvider, useActiveGroup } from "./ActiveGroupContext";
 import type { ActiveGroupSummary, RecentMatchSummary, TopScorer } from "./dashboardApi";
 import Groups from "./Groups";
+import MatchLive from "./MatchLive";
 import MatchSetup from "./MatchSetup";
 import Players from "./Players";
 
@@ -261,7 +262,7 @@ function DashboardBody({ auth }: { auth: AuthResponse }) {
 
 export default function Dashboard({ auth, onLogout }: DashboardProps) {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [view, setView] = useState<"overview" | "groups" | "players" | "organize">("overview");
+  const [view, setView] = useState<"overview" | "groups" | "players" | "organize" | "live">("overview");
   const [playersGroupId, setPlayersGroupId] = useState<string | null>(null);
   const themeClasses = theme === "dark" ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-900";
 
@@ -354,6 +355,17 @@ export default function Dashboard({ auth, onLogout }: DashboardProps) {
                 >
                   Organizacao
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setView("live")}
+                  className={`rounded-2xl px-4 py-2 text-xs font-semibold transition ${
+                    view === "live"
+                      ? "bg-emerald-500 text-emerald-950 shadow-lg shadow-emerald-500/30"
+                      : "border border-slate-700 text-slate-300"
+                  }`}
+                >
+                  Partida ao vivo
+                </button>
               </div>
               {view === "overview" && <DashboardBody auth={auth} />}
               {view === "groups" && <Groups token={auth.access_token} onNavigateToPlayers={navigateToPlayers} />}
@@ -361,6 +373,7 @@ export default function Dashboard({ auth, onLogout }: DashboardProps) {
                 <Players token={auth.access_token} initialGroupId={playersGroupId} onBack={handlePlayersBack} />
               )}
               {view === "organize" && <MatchSetup token={auth.access_token} />}
+              {view === "live" && <MatchLive token={auth.access_token} />}
             </div>
           </main>
         </div>

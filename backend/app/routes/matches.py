@@ -4,14 +4,15 @@ from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
 from .. import schemas
 from ..database import get_session
 from ..dependencies import get_current_user
-from ..models import Group, Match, MatchPlayer, Player, User
+from ..models import Event, EventType as ModelEventType, Group, Match, MatchPlayer, MatchStatus, Player, User
 
 router = APIRouter(prefix="/matches", tags=["matches"])
+events_router = APIRouter(prefix="/events", tags=["events"])
 
 
 def _get_group_for_user(db: Session, group_id: UUID, user_id: UUID) -> Group:
@@ -43,6 +44,77 @@ def _match_response(match: Match) -> schemas.MatchResponse:
         team_size=match.team_size,
         goalkeepers_fixed=match.goalkeepers_fixed,
         created_at=match.created_at,
+    )
+
+
+def _serialize_match_player(entry: MatchPlayer, player: Player) -> schemas.MatchDetailPlayer:
+    return schemas.MatchDetailPlayer(
+        match_player_id=str(entry.id),
+        player_id=str(player.id),
+        nome=player.nome,
+        is_goalkeeper=entry.is_goalkeeper,
+        is_present=entry.is_present,
+        team_number=entry.team_number,
+        order_position=entry.order_position,
+    )
+
+
+def _serialize_event_row(event: Event, primary: Player | None, assist: Player | None) -> schemas.EventResponse:
+    return schemas.EventResponse(
+        id=str(event.id),
+        match_id=str(event.match_id),
+        tipo=schemas.EventType(event.tipo.value if isinstance(event.tipo, ModelEventType) else event.tipo),
+        player_id=str(primary.id) if primary else None,
+        player_nome=primary.nome if primary else None,
+        assist_player_id=str(assist.id) if assist else None,
+        assist_player_nome=assist.nome if assist else None,
+        description=event.description,
+        created_at=event.created_at,
+    )
+
+
+def _match_detail(match: Match, db: Session) -> schemas.MatchDetailResponse:
+    entries = (
+        db.query(MatchPlayer, Player)
+        .join(Player, Player.id == MatchPlayer.player_id)
+        .filter(MatchPlayer.match_id == match.id)
+        .order_by(MatchPlayer.order_position.asc(), Player.nome.asc())
+        .all()
+    )
+
+    teams: dict[str, list[schemas.MatchDetailPlayer]] = {"1": [], "2": []}
+    bench: list[schemas.MatchDetailPlayer] = []
+    for entry, player in entries:
+        serialized = _serialize_match_player(entry, player)
+        if entry.team_number in (1, 2):
+            teams[str(entry.team_number)].append(serialized)
+        else:
+            bench.append(serialized)
+
+    assist_alias = aliased(Player)
+    event_rows = (
+        db.query(Event, Player, assist_alias)
+        .outerjoin(Player, Player.id == Event.player_id)
+        .outerjoin(assist_alias, assist_alias.id == Event.assist_player_id)
+        .filter(Event.match_id == match.id)
+        .order_by(Event.created_at.asc())
+        .all()
+    )
+    events = [_serialize_event_row(event, primary, assist) for event, primary, assist in event_rows]
+
+    return schemas.MatchDetailResponse(
+        id=str(match.id),
+        group_id=str(match.group_id),
+        titulo=match.titulo,
+        starts_at=match.starts_at,
+        status=match.status.value,
+        team_size=match.team_size,
+        goalkeepers_fixed=match.goalkeepers_fixed,
+        created_at=match.created_at,
+        finished_at=match.finished_at,
+        teams=teams,
+        bench=bench,
+        events=events,
     )
 
 
@@ -207,3 +279,107 @@ def generate_match_teams(
     response_bench = [_serialize_generated_player(entry, player) for entry, player in bench]
 
     return schemas.GenerateTeamsResponse(teams=response_teams, bench=response_bench)
+
+
+@router.get("/{match_id}", response_model=schemas.MatchDetailResponse, status_code=status.HTTP_200_OK)
+def get_match_detail(
+    match_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_session),
+) -> schemas.MatchDetailResponse:
+    match = _get_match_for_user(db, match_id, current_user.id)
+    return _match_detail(match, db)
+
+
+@router.post("/{match_id}/next-team", response_model=schemas.MatchDetailResponse, status_code=status.HTTP_200_OK)
+def rotate_team(
+    match_id: UUID,
+    payload: schemas.NextTeamRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_session),
+) -> schemas.MatchDetailResponse:
+    match = _get_match_for_user(db, match_id, current_user.id)
+
+    team_number = payload.team_number
+    losing_players = (
+        db.query(MatchPlayer)
+        .filter(MatchPlayer.match_id == match.id, MatchPlayer.team_number == team_number)
+        .order_by(MatchPlayer.order_position.asc())
+        .all()
+    )
+    bench_players = (
+        db.query(MatchPlayer)
+        .filter(
+            MatchPlayer.match_id == match.id,
+            MatchPlayer.team_number.is_(None),
+            MatchPlayer.is_present.is_(True),
+        )
+        .order_by(MatchPlayer.order_position.asc())
+        .all()
+    )
+
+    needed = max(len(losing_players), match.team_size)
+    if len(bench_players) < needed:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Nao ha jogadores suficientes na fila para substituir todo o time.")
+
+    for entry in losing_players:
+        entry.team_number = None
+
+    incoming = bench_players[:needed]
+    for entry in incoming:
+        entry.team_number = team_number
+
+    db.commit()
+    for entry in losing_players + incoming:
+        db.refresh(entry)
+    return _match_detail(match, db)
+
+
+@router.post("/{match_id}/finish", response_model=schemas.FinishMatchResponse, status_code=status.HTTP_200_OK)
+def finish_match(
+    match_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_session),
+) -> schemas.FinishMatchResponse:
+    match = _get_match_for_user(db, match_id, current_user.id)
+    match.status = MatchStatus.FINISHED
+    match.finished_at = datetime.utcnow()
+    db.add(match)
+    db.commit()
+    db.refresh(match)
+    return schemas.FinishMatchResponse(id=str(match.id), status=match.status.value, finished_at=match.finished_at)
+
+
+@events_router.post("", response_model=schemas.EventResponse, status_code=status.HTTP_201_CREATED)
+def create_event(
+    payload: schemas.EventCreateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_session),
+) -> schemas.EventResponse:
+    match = _get_match_for_user(db, UUID(payload.match_id), current_user.id)
+
+    player = None
+    assist = None
+    player_id = UUID(payload.player_id) if payload.player_id else None
+    assist_id = UUID(payload.assist_player_id) if payload.assist_player_id else None
+
+    if player_id:
+        player = db.query(Player).filter(Player.id == player_id, Player.group_id == match.group_id).first()
+        if not player:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Jogador invalido para este grupo.")
+    if assist_id:
+        assist = db.query(Player).filter(Player.id == assist_id, Player.group_id == match.group_id).first()
+        if not assist:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Assistencia invalida para este grupo.")
+
+    event = Event(
+        match_id=match.id,
+        player_id=player.id if player else None,
+        assist_player_id=assist.id if assist else None,
+        tipo=ModelEventType(payload.tipo.value),
+        description=payload.description,
+    )
+    db.add(event)
+    db.commit()
+    db.refresh(event)
+    return _serialize_event_row(event, player, assist)

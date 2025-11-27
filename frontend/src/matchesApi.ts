@@ -47,6 +47,59 @@ export type GenerateTeamsResponse = {
   bench: GeneratedTeamPlayer[];
 };
 
+export type EventType = "goal" | "card" | "attendance" | "assist" | "substitution";
+
+export type MatchDetailPlayer = {
+  match_player_id: string;
+  player_id: string;
+  nome: string;
+  is_goalkeeper: boolean;
+  is_present: boolean;
+  team_number: number | null;
+  order_position: number;
+};
+
+export type EventResponse = {
+  id: string;
+  match_id: string;
+  tipo: EventType;
+  player_id?: string | null;
+  player_nome?: string | null;
+  assist_player_id?: string | null;
+  assist_player_nome?: string | null;
+  description?: string | null;
+  created_at: string;
+};
+
+export type MatchDetailResponse = {
+  id: string;
+  group_id: string;
+  titulo: string;
+  starts_at: string;
+  status: string;
+  team_size: number;
+  goalkeepers_fixed: boolean;
+  created_at: string;
+  finished_at?: string | null;
+  teams: Record<string, MatchDetailPlayer[]>;
+  bench: MatchDetailPlayer[];
+  events: EventResponse[];
+};
+
+export type EventCreatePayload = {
+  match_id: string;
+  tipo: EventType;
+  player_id?: string | null;
+  assist_player_id?: string | null;
+  description?: string | null;
+};
+
+export type FinishMatchResponse = {
+  id: string;
+  status: string;
+  finished_at: string;
+};
+
 const DEFAULT_TIMEOUT = 15000;
 
 async function request<T>(path: string, method: string, token: string, body?: unknown): Promise<T> {
@@ -96,5 +149,17 @@ export const matchesApi = {
   },
   generateTeams(token: string, matchId: string, payload: { team_size: number; goalkeepers_fixed: boolean }) {
     return request<GenerateTeamsResponse>(`/matches/${matchId}/generate-teams`, "POST", token, payload);
+  },
+  detail(token: string, matchId: string) {
+    return request<MatchDetailResponse>(`/matches/${matchId}`, "GET", token);
+  },
+  rotate(token: string, matchId: string, payload: { team_number: number }) {
+    return request<MatchDetailResponse>(`/matches/${matchId}/next-team`, "POST", token, payload);
+  },
+  finish(token: string, matchId: string) {
+    return request<FinishMatchResponse>(`/matches/${matchId}/finish`, "POST", token, {});
+  },
+  createEvent(token: string, payload: EventCreatePayload) {
+    return request<EventResponse>("/events", "POST", token, payload);
   },
 };

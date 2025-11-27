@@ -176,6 +176,31 @@ class StatsOverviewResponse(BaseModel):
     top_scorers: list[TopScorer]
 
 
+class MatchDetailPlayer(BaseModel):
+    match_player_id: str
+    player_id: str
+    nome: str
+    is_goalkeeper: bool
+    is_present: bool
+    team_number: Optional[int]
+    order_position: int
+
+
+class MatchDetailResponse(BaseModel):
+    id: str
+    group_id: str
+    titulo: str
+    starts_at: datetime
+    status: str
+    team_size: int
+    goalkeepers_fixed: bool
+    created_at: datetime
+    finished_at: Optional[datetime]
+    teams: dict[str, list[MatchDetailPlayer]]
+    bench: list[MatchDetailPlayer]
+    events: list["EventResponse"]
+
+
 class MatchCreateRequest(BaseModel):
     group_id: str
     titulo: str = Field(min_length=3, max_length=160)
@@ -228,3 +253,41 @@ class GeneratedTeam(BaseModel):
 class GenerateTeamsResponse(BaseModel):
     teams: list[GeneratedTeam]
     bench: list[GeneratedTeamPlayer]
+
+
+class EventType(str, Enum):
+    GOAL = "goal"
+    CARD = "card"
+    ATTENDANCE = "attendance"
+    ASSIST = "assist"
+    SUBSTITUTION = "substitution"
+
+
+class EventCreateRequest(BaseModel):
+    match_id: str
+    tipo: EventType
+    player_id: Optional[str] = None
+    assist_player_id: Optional[str] = None
+    description: Optional[str] = Field(default=None, max_length=255)
+
+
+class EventResponse(BaseModel):
+    id: str
+    match_id: str
+    tipo: EventType
+    player_id: Optional[str]
+    player_nome: Optional[str]
+    assist_player_id: Optional[str]
+    assist_player_nome: Optional[str]
+    description: Optional[str]
+    created_at: datetime
+
+
+class NextTeamRequest(BaseModel):
+    team_number: int = Field(ge=1, le=2)
+
+
+class FinishMatchResponse(BaseModel):
+    id: str
+    status: str
+    finished_at: datetime

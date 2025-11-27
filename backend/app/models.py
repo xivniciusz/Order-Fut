@@ -111,6 +111,7 @@ class Match(Base):
     team_size: Mapped[int] = mapped_column(Integer, nullable=False, default=5)
     goalkeepers_fixed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     generated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
 
     group: Mapped[Group] = relationship("Group", back_populates="matches")
@@ -122,6 +123,8 @@ class EventType(str, PyEnum):
     GOAL = "goal"
     CARD = "card"
     ATTENDANCE = "attendance"
+    ASSIST = "assist"
+    SUBSTITUTION = "substitution"
 
 
 class Event(Base):
@@ -130,12 +133,15 @@ class Event(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=default_uuid)
     match_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("matches.id", ondelete="CASCADE"), index=True)
     player_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("players.id", ondelete="SET NULL"))
+    assist_player_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("players.id", ondelete="SET NULL"))
     tipo: Mapped[EventType] = mapped_column(SAEnum(EventType), nullable=False)
     valor: Mapped[float | None] = mapped_column(Float)
+    description: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
 
     match: Mapped[Match] = relationship("Match", back_populates="events")
-    player: Mapped[Player | None] = relationship("Player", back_populates="events")
+    player: Mapped[Player | None] = relationship("Player", back_populates="events", foreign_keys=[player_id])
+    assist_player: Mapped[Player | None] = relationship("Player", foreign_keys=[assist_player_id])
 
 
 class MatchPlayer(Base):
