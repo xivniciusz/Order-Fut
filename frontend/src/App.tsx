@@ -74,6 +74,7 @@ const InputField = ({ label, type = "text", value, onChange, placeholder, autoCo
 };
 
 const MIN_PASSWORD = 8;
+const MAX_PASSWORD = 72;
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 
@@ -126,6 +127,10 @@ function App() {
       setAlert({ type: "error", text: `A senha precisa de pelo menos ${MIN_PASSWORD} caracteres.` });
       return;
     }
+    if (loginForm.password.length > MAX_PASSWORD) {
+      setAlert({ type: "error", text: `Utilize senhas de ate ${MAX_PASSWORD} caracteres.` });
+      return;
+    }
     setIsLoading(true);
     setAlert(null);
     try {
@@ -150,6 +155,10 @@ function App() {
     }
     if (registerForm.password.length < MIN_PASSWORD) {
       setAlert({ type: "error", text: `A senha precisa de pelo menos ${MIN_PASSWORD} caracteres.` });
+      return;
+    }
+    if (registerForm.password.length > MAX_PASSWORD) {
+      setAlert({ type: "error", text: `Utilize senhas de ate ${MAX_PASSWORD} caracteres.` });
       return;
     }
     if (registerForm.password !== registerForm.confirm_password) {
@@ -205,6 +214,10 @@ function App() {
       setAlert({ type: "error", text: `A nova senha precisa de pelo menos ${MIN_PASSWORD} caracteres.` });
       return;
     }
+    if (resetForm.password.length > MAX_PASSWORD) {
+      setAlert({ type: "error", text: `Utilize senhas de ate ${MAX_PASSWORD} caracteres.` });
+      return;
+    }
     if (resetForm.password !== resetForm.confirm_password) {
       setAlert({ type: "error", text: "As senhas precisam ser iguais." });
       return;
@@ -255,7 +268,7 @@ function App() {
               onChange={(value) => setLoginForm((prev) => ({ ...prev, password: value }))}
               autoComplete="current-password"
               canReveal
-              helper="Minimo de 8 caracteres."
+              helper={`Use de ${MIN_PASSWORD} a ${MAX_PASSWORD} caracteres.`}
             />
             <button className="rounded-xl bg-emerald-500 py-3 text-lg font-semibold text-emerald-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={isLoading}>
               {isLoading ? "Entrando..." : "Entrar"}
@@ -293,7 +306,7 @@ function App() {
               onChange={(value) => setRegisterForm((prev) => ({ ...prev, password: value }))}
               autoComplete="new-password"
               canReveal
-              helper="Use combinacao com letras e numeros para mais seguranca."
+              helper={`Use combinacao com letras e numeros (${MIN_PASSWORD}-${MAX_PASSWORD} caracteres).`}
             />
             <InputField
               label="Confirmar senha"
