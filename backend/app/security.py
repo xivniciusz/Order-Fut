@@ -11,8 +11,23 @@ from .config import settings
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
+MAX_BCRYPT_BYTES = 72
+
+
+def _normalize_secret(secret: str) -> str:
+    data = secret.encode("utf-8")
+    if len(data) <= MAX_BCRYPT_BYTES:
+        return secret
+    # Trunca respeitando fronteira de bytes UTF-8.
+    truncated = data[:MAX_BCRYPT_BYTES]
+    while (truncated[-1] & 0xC0) == 0x80:
+        truncated = truncated[:-1]
+    return truncated.decode("utf-8", errors="ignore")
+
+
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    safe_password = _normalize_secret(password)
+    return pwd_context.hash(safe_password)
 
 
 def verify_password(password: str, password_hash: str) -> bool:

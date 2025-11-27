@@ -128,7 +128,10 @@ function App() {
       return;
     }
     if (loginForm.password.length > MAX_PASSWORD) {
-      setAlert({ type: "error", text: `Utilize senhas de ate ${MAX_PASSWORD} caracteres.` });
+      setAlert({
+        type: "error",
+        text: `Utilize senhas de ate ${MAX_PASSWORD} caracteres (limite tecnico do provedor de seguranca).`,
+      });
       return;
     }
     setIsLoading(true);
@@ -158,7 +161,10 @@ function App() {
       return;
     }
     if (registerForm.password.length > MAX_PASSWORD) {
-      setAlert({ type: "error", text: `Utilize senhas de ate ${MAX_PASSWORD} caracteres.` });
+      setAlert({
+        type: "error",
+        text: `Utilize senhas de ate ${MAX_PASSWORD} caracteres (limite tecnico do provedor de seguranca).`,
+      });
       return;
     }
     if (registerForm.password !== registerForm.confirm_password) {
@@ -215,7 +221,10 @@ function App() {
       return;
     }
     if (resetForm.password.length > MAX_PASSWORD) {
-      setAlert({ type: "error", text: `Utilize senhas de ate ${MAX_PASSWORD} caracteres.` });
+      setAlert({
+        type: "error",
+        text: `Utilize senhas de ate ${MAX_PASSWORD} caracteres (limite tecnico do provedor de seguranca).`,
+      });
       return;
     }
     if (resetForm.password !== resetForm.confirm_password) {
