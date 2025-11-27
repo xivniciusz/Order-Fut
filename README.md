@@ -13,7 +13,11 @@ Ambiente full-stack com backend FastAPI, frontend React + Vite + Tailwind e banc
    cd backend
    poetry install
    ```
-3. Copie `.env.example` para `.env` e ajuste `DATABASE_URL` e `ALLOWED_ORIGINS` conforme ambiente (separe origens por virgula).
+3. Copie `.env.example` para `.env` e configure:
+   - `DATABASE_URL` com o Postgres utilizado.
+   - `ALLOWED_ORIGINS` (lista separada por virgula, usada no CORS).
+   - `FRONTEND_BASE_URL`, necessario para links de redefinicao de senha.
+   - `JWT_SECRET` e opcoes de expiracao (`ACCESS_TOKEN_EXPIRES_MINUTES`, `REFRESH_TOKEN_EXPIRES_MINUTES`, `PASSWORD_RESET_TOKEN_MINUTES`).
 4. Rode o servidor em modo dev:
    ```powershell
    poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000

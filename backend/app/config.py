@@ -14,6 +14,21 @@ class Settings(BaseModel):
         default_factory=lambda: ["http://localhost:5173"],
         alias="ALLOWED_ORIGINS",
     )
+    jwt_secret: str = Field(default="DEV_ONLY_SECRET", alias="JWT_SECRET")
+    jwt_algorithm: str = Field(default="HS256", alias="JWT_ALGORITHM")
+    access_token_expires_minutes: int = Field(
+        default=15,
+        alias="ACCESS_TOKEN_EXPIRES_MINUTES",
+    )
+    refresh_token_expires_minutes: int = Field(
+        default=60 * 24 * 7,
+        alias="REFRESH_TOKEN_EXPIRES_MINUTES",
+    )
+    password_reset_token_minutes: int = Field(
+        default=30,
+        alias="PASSWORD_RESET_TOKEN_MINUTES",
+    )
+    frontend_base_url: str = Field(default="http://localhost:5173", alias="FRONTEND_BASE_URL")
 
     class Config:
         populate_by_name = True
@@ -31,6 +46,12 @@ def get_settings() -> Settings:
             "ALLOWED_ORIGINS",
             "http://localhost:5173,https://orderfut.netlify.app",
         ).split(","),
+        jwt_secret=os.getenv("JWT_SECRET", "DEV_ONLY_SECRET"),
+        jwt_algorithm=os.getenv("JWT_ALGORITHM", "HS256"),
+        access_token_expires_minutes=int(os.getenv("ACCESS_TOKEN_EXPIRES_MINUTES", "15")),
+        refresh_token_expires_minutes=int(os.getenv("REFRESH_TOKEN_EXPIRES_MINUTES", str(60 * 24 * 7))),
+        password_reset_token_minutes=int(os.getenv("PASSWORD_RESET_TOKEN_MINUTES", "30")),
+        frontend_base_url=os.getenv("FRONTEND_BASE_URL", "http://localhost:5173"),
     )
 
 

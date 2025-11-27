@@ -2,8 +2,9 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
-from .database import get_session
 from .config import settings
+from .database import Base, engine, get_session
+from .routes import auth
 
 app = FastAPI(title=settings.app_name, debug=settings.debug)
 
@@ -14,6 +15,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+def init_database() -> None:
+    Base.metadata.create_all(bind=engine)
+
+
+app.include_router(auth.router)
 
 
 @app.get("/health", tags=["saude"])
