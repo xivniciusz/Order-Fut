@@ -252,8 +252,7 @@ function DashboardBody({ auth }: { auth: AuthResponse }) {
       </div>
 
       <footer className="rounded-3xl border border-slate-200/20 bg-white/5 px-6 py-4 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-300">
-        Dados alimentados diretamente pelos novos endpoints `/dashboard/groups/active` e `/dashboard/stats/overview`. Utilize o token atual
-        para testar em ferramentas como o Insomnia.
+        Centralize convocacoes, escala e desempenho em um unico painel: cadastre grupos, organize elencos e acompanhe indicadores sem sair do app.
       </footer>
     </div>
   );

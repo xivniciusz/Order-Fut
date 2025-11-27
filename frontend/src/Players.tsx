@@ -9,12 +9,14 @@ const POSITION_LABELS: Record<PlayerPosition, string> = {
   ATT: "Ataque",
 };
 
-const POSITION_OPTIONS: { value: PlayerPosition; label: string }[] = [
-  { value: "GK", label: "GK" },
-  { value: "DEF", label: "DEF" },
-  { value: "MID", label: "MID" },
-  { value: "ATT", label: "ATT" },
-];
+const POSITION_OPTIONS: { value: PlayerPosition; label: string }[] = ("GK DEF MID ATT".split(" ") as PlayerPosition[]).map((position) => ({
+  value: position,
+  label: POSITION_LABELS[position],
+}));
+
+const POSITION_FILTERS: { value: PlayerPosition | "ALL"; label: string }[] = [{ value: "ALL", label: "Todos" }, ...POSITION_OPTIONS];
+
+const positionLabel = (value: PlayerPosition) => POSITION_LABELS[value] ?? value;
 
 const inputBase =
   "w-full rounded-2xl border border-slate-800/40 bg-slate-900/40 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition focus:border-emerald-400 focus:bg-slate-900";
@@ -277,7 +279,7 @@ export default function Players({ token, initialGroupId, onBack }: PlayersProps)
               >
                 {POSITION_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {POSITION_LABELS[option.value]}
+                    {option.label}
                   </option>
                 ))}
               </select>
@@ -376,18 +378,18 @@ export default function Players({ token, initialGroupId, onBack }: PlayersProps)
         <div>
           <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Filtrar posicao</label>
           <div className="mt-2 flex flex-wrap gap-2">
-            {["ALL", ...POSITION_OPTIONS.map((option) => option.value)].map((option) => (
+            {POSITION_FILTERS.map((option) => (
               <button
-                key={option}
+                key={option.value}
                 type="button"
-                onClick={() => setPositionFilter(option as PlayerPosition | "ALL")}
+                onClick={() => setPositionFilter(option.value as PlayerPosition | "ALL")}
                 className={`rounded-2xl px-3 py-2 text-xs font-semibold transition ${
-                  positionFilter === option
+                  positionFilter === option.value
                     ? "bg-emerald-500 text-emerald-950"
                     : "border border-slate-700 text-slate-300 hover:border-emerald-400"
                 }`}
               >
-                {option === "ALL" ? "Todos" : option}
+                {option.label}
               </button>
             ))}
           </div>
@@ -427,7 +429,7 @@ export default function Players({ token, initialGroupId, onBack }: PlayersProps)
                     </div>
                     <div className="flex-1">
                       <p className="text-lg font-semibold text-white">{player.nome}</p>
-                      <p className="text-xs uppercase tracking-[0.3em] text-emerald-300">{player.posicao}</p>
+                      <p className="text-xs uppercase tracking-[0.3em] text-emerald-300">{positionLabel(player.posicao).toUpperCase()}</p>
                       <p className="text-xs text-slate-400">Camisa {player.numero_camisa ?? "--"}</p>
                     </div>
                     <div className="flex flex-col gap-2 text-xs">
