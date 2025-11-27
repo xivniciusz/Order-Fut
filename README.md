@@ -42,6 +42,20 @@ Todos os endpoints abaixo **requerem** cabecalho `Authorization: Bearer <access_
 
 Os modelos `Group`, `Player`, `Match` e `Event` já estão configurados em `backend/app/models.py`, então basta popular essas tabelas para ver dados reais no painel.
 
+### CRUD de grupos
+
+Endpoints protegidos que alimentam a nova tela de gestao de grupos:
+
+| Metodo | Rota                          | Descricao |
+| ------ | ----------------------------- | --------- |
+| GET    | `/groups`                     | Retorna todos os grupos do usuario com contagem de jogadores e status ativo. |
+| POST   | `/groups`                     | Cria um grupo (campos: `nome`, `ano_base`, `descricao`). O primeiro grupo ja nasce ativo. |
+| PUT    | `/groups/{id}`                | Atualiza nome, ano base ou descricao do grupo informado. |
+| DELETE | `/groups/{id}`                | Remove o grupo. Se ele estiver ativo, o backend promove o proximo grupo para ativo. |
+| POST   | `/groups/{id}/set-active`     | Marca o grupo como ativo e desativa os demais do mesmo usuario. |
+
+Tabela `groups` agora contem `id`, `user_id`, `nome`, `descricao`, `ano_base`, `is_active`, `created_at` e `updated_at` (alem do relacionamento com `players` e `matches`).
+
 ## Frontend (React + Vite + Tailwind)
 
 1. Instale dependencias com npm ou pnpm (exemplo com npm):
@@ -62,10 +76,15 @@ Os modelos `Group`, `Player`, `Match` e `Event` já estão configurados em `back
    - Barra lateral com grupos ativos e acao de sincronizar.
    - Cards com totais (atletas, partidas, gols e presencas) + listas de ultimos jogos e artilharia.
    - Alternancia manual de tema (claro/escuro) com Tailwind em modo `class`.
+- Nova aba **Grupos** (dentro do dashboard) oferece CRUD completo: lista responsiva, botao "Criar grupo", botoes "Definir como ativo", modais de edicao/confirmacao de exclusao e atalho "Jogadores" para navegar para a tela de elenco.
+- Componentes/servicos principais:
+   - `ActiveGroupContext.tsx` agora respeita o estado `is_active` retornado pelo backend para priorizar o grupo certo.
+   - `groupsApi.ts` centraliza chamadas autenticadas (`GET/POST/PUT/DELETE/POST set-active`).
+   - `Groups.tsx` (pedida como *Groups.jsx*, implementada em TSX para manter o padrao do projeto) renderiza cards, valida formularios e reutiliza o contexto para sincronizar o dashboard.
 - Para testar manualmente:
    1. Faca login/cadastro e copie o token exibido na sessao.
    2. Popule as tabelas no Postgres (players, matches, events) para alimentar os cards.
-   3. Utilize a acao "Sincronizar" ou recarregue a pagina para refazer os fetches.
+   3. Utilize a acao "Sincronizar" ou recarregue a pagina para refazer os fetches; na aba Grupos, acione os botoes de criar/editar/excluir/ativar.
 
 Configure o backend usado no fetch criando `frontend/.env` a partir do `.env.example`:
 ```

@@ -52,7 +52,8 @@ export function ActiveGroupProvider({ token, children }: ActiveGroupProviderProp
         if (current && response.groups.some((group) => group.id === current)) {
           return current;
         }
-        return response.groups[0].id;
+        const activeGroup = response.groups.find((group) => group.is_active);
+        return activeGroup?.id ?? response.groups[0].id;
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Nao foi possivel carregar os grupos.";

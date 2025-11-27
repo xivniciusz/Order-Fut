@@ -4,10 +4,12 @@ export type ActiveGroupSummary = {
   id: string;
   nome: string;
   descricao?: string | null;
+  ano_base?: number | null;
   created_at: string;
   total_players: number;
   total_matches: number;
   next_match?: string | null;
+  is_active: boolean;
 };
 
 export type ActiveGroupsResponse = {

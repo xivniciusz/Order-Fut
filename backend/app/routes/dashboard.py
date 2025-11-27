@@ -18,7 +18,7 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 def list_active_groups(current_user: User = Depends(get_current_user), db: Session = Depends(get_session)) -> schemas.ActiveGroupsResponse:
     groups = (
         db.query(Group)
-        .filter(Group.owner_id == current_user.id)
+        .filter(Group.user_id == current_user.id)
         .order_by(Group.created_at.asc())
         .all()
     )
@@ -63,10 +63,12 @@ def list_active_groups(current_user: User = Depends(get_current_user), db: Sessi
                 id=str(group.id),
                 nome=group.nome,
                 descricao=group.descricao,
+                ano_base=group.ano_base,
                 created_at=group.created_at,
                 total_players=int(player_counts.get(group.id, 0)),
                 total_matches=int(match_counts.get(group.id, 0)),
                 next_match=next_match_map.get(group.id),
+                is_active=group.is_active,
             )
         )
 
@@ -79,11 +81,13 @@ def stats_overview(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_session),
 ) -> schemas.StatsOverviewResponse:
-    group_query = db.query(Group).filter(Group.owner_id == current_user.id)
+    base_query = db.query(Group).filter(Group.user_id == current_user.id)
     if group_id:
-        group_query = group_query.filter(Group.id == group_id)
-
-    group = group_query.order_by(Group.created_at.asc()).first()
+        group = base_query.filter(Group.id == group_id).first()
+    else:
+        group = base_query.filter(Group.is_active.is_(True)).first()
+        if not group:
+            group = base_query.order_by(Group.created_at.asc()).first()
     if not group:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Grupo nao encontrado para este usuario.")
 

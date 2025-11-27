@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import type { AuthResponse } from "./api";
 import { ActiveGroupProvider, useActiveGroup } from "./ActiveGroupContext";
 import type { ActiveGroupSummary, RecentMatchSummary, TopScorer } from "./dashboardApi";
+import Groups from "./Groups";
 
 export type DashboardProps = {
   auth: AuthResponse;
@@ -284,48 +285,79 @@ function DashboardBody({ auth }: { auth: AuthResponse }) {
 
 export default function Dashboard({ auth, onLogout }: DashboardProps) {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const themeClasses =
-    theme === "dark"
-      ? "bg-slate-950 text-slate-100"
-      : "bg-slate-50 text-slate-900";
+  const [view, setView] = useState<"overview" | "groups">("overview");
+  const themeClasses = theme === "dark" ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-900";
+
+  const navigateToPlayers = (groupId: string) => {
+    const targetUrl = `/players?group=${groupId}`;
+    window.location.href = targetUrl;
+  };
 
   return (
     <ActiveGroupProvider token={auth.access_token}>
       <div className={theme === "dark" ? "dark" : ""}>
         <div className={`${themeClasses} min-h-screen transition-colors`}>
           <header className="border-b border-slate-200/10 bg-white/5 px-6 py-4 text-sm shadow-lg shadow-slate-900/10 dark:border-slate-900 dark:bg-slate-950/60">
-          <div className="mx-auto flex w-full max-w-6xl items-center justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.5em] text-emerald-400">Order Fut</p>
-              <p className="text-base font-semibold">{auth.user.nome}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{auth.user.email}</p>
+            <div className="mx-auto flex w-full max-w-6xl items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.5em] text-emerald-400">Order Fut</p>
+                <p className="text-base font-semibold">{auth.user.nome}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{auth.user.email}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
+                  className="rounded-2xl border border-slate-200/50 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-emerald-400 hover:text-emerald-400 dark:border-slate-700 dark:text-slate-200"
+                >
+                  {theme === "dark" ? "Tema claro" : "Tema escuro"}
+                </button>
+                <button
+                  type="button"
+                  onClick={onLogout}
+                  className="rounded-2xl border border-rose-500/60 px-4 py-2 text-xs font-semibold text-rose-400 transition hover:bg-rose-500/10"
+                >
+                  Encerrar sessao
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
-                className="rounded-2xl border border-slate-200/50 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-emerald-400 hover:text-emerald-400 dark:border-slate-700 dark:text-slate-200"
-              >
-                {theme === "dark" ? "Tema claro" : "Tema escuro"}
-              </button>
-              <button
-                type="button"
-                onClick={onLogout}
-                className="rounded-2xl border border-rose-500/60 px-4 py-2 text-xs font-semibold text-rose-400 transition hover:bg-rose-500/10"
-              >
-                Encerrar sessao
-              </button>
-            </div>
-          </div>
           </header>
 
           <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-10 lg:flex-row">
-          <div className="w-full lg:w-80">
-            <GroupsPanel />
-          </div>
-          <div className="flex-1">
-            <DashboardBody auth={auth} />
-          </div>
+            <div className="w-full lg:w-80">
+              <GroupsPanel />
+            </div>
+            <div className="flex-1">
+              <div className="mb-6 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setView("overview")}
+                  className={`rounded-2xl px-4 py-2 text-xs font-semibold transition ${
+                    view === "overview"
+                      ? "bg-emerald-500 text-emerald-950 shadow-lg shadow-emerald-500/30"
+                      : "border border-slate-700 text-slate-300"
+                  }`}
+                >
+                  Visao geral
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setView("groups")}
+                  className={`rounded-2xl px-4 py-2 text-xs font-semibold transition ${
+                    view === "groups"
+                      ? "bg-emerald-500 text-emerald-950 shadow-lg shadow-emerald-500/30"
+                      : "border border-slate-700 text-slate-300"
+                  }`}
+                >
+                  Grupos
+                </button>
+              </div>
+              {view === "overview" ? (
+                <DashboardBody auth={auth} />
+              ) : (
+                <Groups token={auth.access_token} onNavigateToPlayers={navigateToPlayers} />
+              )}
+            </div>
           </main>
         </div>
       </div>
