@@ -113,15 +113,25 @@ export default function MatchSetup({ token }: MatchSetupProps) {
     setGeneratedResult(null);
   };
 
-  const handleManualOrderChange = (playerId: string, value: string) => {
-    const parsed = Number(value);
-    const nextOrder = Number.isNaN(parsed) ? 0 : Math.max(0, Math.floor(parsed - 1));
-    setPlayers((prev) => sortPlayersByOrder(prev.map((player) => (player.id === playerId ? { ...player, order: nextOrder } : player))));
+  const linePlayers = useMemo(() => players.filter((player) => !player.isGoalkeeper), [players]);
+  const goalkeeperPlayers = useMemo(() => players.filter((player) => player.isGoalkeeper), [players]);
+  const presentLinePlayers = useMemo(() => linePlayers.filter((player) => player.isPresent), [linePlayers]);
+  const presentLineCount = presentLinePlayers.length;
+
+  const handleOrderSelect = (playerId: string, value: string) => {
+    const nextPosition = Math.max(0, Number(value));
+    setPlayers((prev) => {
+      const currentIndex = prev.findIndex((player) => player.id === playerId);
+      if (currentIndex === -1) {
+        return prev;
+      }
+      const updated = [...prev];
+      const [removed] = updated.splice(currentIndex, 1);
+      updated.splice(Math.min(nextPosition, updated.length), 0, removed);
+      return updated.map((player, index) => ({ ...player, order: index }));
+    });
     setGeneratedResult(null);
   };
-
-  const presentPlayers = useMemo(() => players.filter((player) => player.isPresent), [players]);
-  const presentCount = presentPlayers.length;
 
   const handleCreateMatch = async () => {
     if (!currentGroupId) {
@@ -181,7 +191,7 @@ export default function MatchSetup({ token }: MatchSetupProps) {
       setError("Crie e sincronize a sessao antes de gerar os times.");
       return;
     }
-    if (presentCount < matchForm.teamSize * 2) {
+      if (presentLineCount < matchForm.teamSize * 2) {
       setError("Quantidade insuficiente de jogadores presentes para montar dois times completos.");
       return;
     }
@@ -223,7 +233,7 @@ export default function MatchSetup({ token }: MatchSetupProps) {
           <h3 className="text-xl font-semibold text-white">Times gerados</h3>
           <p className="text-sm text-slate-400">Baseados na ordem de chegada e preferencia de goleiros.</p>
         </header>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {generatedResult.teams.map((team) => (
             <div key={team.team_number} className="rounded-2xl border border-emerald-500/40 bg-emerald-500/5 p-4">
               <p className="text-xs uppercase tracking-[0.4em] text-emerald-300">Time {team.team_number}</p>
@@ -238,18 +248,6 @@ export default function MatchSetup({ token }: MatchSetupProps) {
             </div>
           ))}
         </div>
-        {generatedResult.bench.length > 0 && (
-          <div className="mt-5 rounded-2xl border border-slate-700 bg-slate-900/60 p-4">
-            <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Banco</p>
-            <ul className="mt-3 space-y-2">
-              {generatedResult.bench.map((player) => (
-                <li key={player.match_player_id} className="rounded-2xl bg-black/40 px-3 py-2 text-sm text-slate-200">
-                  {player.nome}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
       </section>
     );
   };
@@ -275,7 +273,9 @@ export default function MatchSetup({ token }: MatchSetupProps) {
           <p className="text-sm text-slate-400">Marque presencas, defina goleiros e gere os times obedecendo a ordem de chegada.</p>
         </div>
         <div className="text-right text-sm text-slate-400">
-          <p>Jogadores presentes: <span className="font-semibold text-white">{presentCount}</span></p>
+          <p>
+            Linhas presentes: <span className="font-semibold text-white">{presentLineCount}</span>
+          </p>
           <p className="text-xs">Necessario minimo: {matchForm.teamSize * 2}</p>
         </div>
       </header>
@@ -393,12 +393,12 @@ export default function MatchSetup({ token }: MatchSetupProps) {
               type="button"
               onClick={handleGenerateTeams}
               className="rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-emerald-950 shadow-lg shadow-emerald-500/30 disabled:opacity-60"
-              disabled={!matchId || matchLoading || presentCount < matchForm.teamSize * 2}
+              disabled={!matchId || matchLoading || presentLineCount < matchForm.teamSize * 2}
             >
               Gerar times automaticamente
             </button>
             <p className="text-xs text-slate-400">
-              Arraste os jogadores para reordenar a fila. Primeiro os goleiros, depois a ordem de chegada.
+              Arraste ou reordene os jogadores de linha e use a lista dedicada para definir quem assume o gol em cada rodada.
             </p>
           </div>
         </div>
@@ -434,59 +434,123 @@ export default function MatchSetup({ token }: MatchSetupProps) {
             ))}
           </div>
         ) : players.length ? (
-          <ul className="space-y-3">
-            {players.map((player) => (
-              <li
-                key={player.id}
-                draggable
-                onDragStart={() => handleDragStart(player.id)}
-                onDragOver={handleDragOver}
-                onDrop={() => handleDrop(player.id)}
-                className={`flex flex-wrap items-center gap-4 rounded-2xl border px-4 py-3 text-sm transition ${
-                  player.isPresent ? "border-emerald-400/40 bg-emerald-500/5" : "border-slate-700 bg-slate-900/60"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="cursor-move text-xs uppercase tracking-[0.4em] text-slate-500">⋮⋮</span>
-                  <input
-                    type="checkbox"
-                    checked={player.isPresent}
-                    onChange={(event) =>
-                      updatePlayer(player.id, (current) => ({ ...current, isPresent: event.target.checked }))
+          <div className="space-y-6">
+            <div>
+              <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Jogadores de linha</p>
+              {linePlayers.length ? (
+                <ul className="mt-3 space-y-3">
+                  {linePlayers.map((player) => {
+                    const actualIndex = players.findIndex((base) => base.id === player.id);
+                    if (actualIndex === -1) {
+                      return null;
                     }
-                    className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-emerald-500 focus:ring-emerald-500"
-                  />
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-white">
-                    {player.nome}
-                    {player.posicao === "GK" && <span className="ml-2 text-xs text-slate-400">(GK)</span>}
-                  </p>
-                  <label className="mt-1 flex items-center gap-2 text-xs text-slate-400">
-                    Ordem
-                    <input
-                      type="number"
-                      min={1}
-                      className="w-16 rounded-xl border border-slate-700 bg-slate-900 px-2 py-1 text-right text-xs text-white"
-                      value={player.order + 1}
-                      onChange={(event) => handleManualOrderChange(player.id, event.target.value)}
-                    />
-                  </label>
-                </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    updatePlayer(player.id, (current) => ({ ...current, isGoalkeeper: !current.isGoalkeeper }))
-                  }
-                  className={`rounded-2xl px-3 py-1 text-xs font-semibold ${
-                    player.isGoalkeeper ? "bg-emerald-500/20 text-emerald-200" : "border border-slate-600 text-slate-300"
-                  }`}
-                >
-                  {player.isGoalkeeper ? "Goleiro" : "Marcar GK"}
-                </button>
-              </li>
-            ))}
-          </ul>
+                    return (
+                      <li
+                        key={player.id}
+                        draggable
+                        onDragStart={() => handleDragStart(player.id)}
+                        onDragOver={handleDragOver}
+                        onDrop={() => handleDrop(player.id)}
+                        className={`flex flex-wrap items-center gap-4 rounded-2xl border px-4 py-3 text-sm transition ${
+                          player.isPresent ? "border-emerald-400/40 bg-emerald-500/5" : "border-slate-700 bg-slate-900/60"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="cursor-move text-xs uppercase tracking-[0.4em] text-slate-500">⋮⋮</span>
+                          <input
+                            type="checkbox"
+                            checked={player.isPresent}
+                            onChange={(event) =>
+                              updatePlayer(player.id, (current) => ({ ...current, isPresent: event.target.checked }))
+                            }
+                            className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-emerald-500 focus:ring-emerald-500"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-semibold text-white">{player.nome}</p>
+                          <label className="mt-1 flex items-center gap-2 text-xs text-slate-400">
+                            Ordem
+                            <select
+                              className="rounded-xl border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-white"
+                              value={actualIndex}
+                              onChange={(event) => handleOrderSelect(player.id, event.target.value)}
+                            >
+                              {linePlayers.map((linePlayer, optionIndex) => {
+                                const optionActualIndex = players.findIndex((base) => base.id === linePlayer.id);
+                                if (optionActualIndex === -1) {
+                                  return null;
+                                }
+                                return (
+                                  <option key={optionActualIndex} value={optionActualIndex}>
+                                    {optionIndex + 1}º da fila
+                                  </option>
+                                );
+                              })}
+                            </select>
+                          </label>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updatePlayer(player.id, (current) => ({ ...current, isGoalkeeper: !current.isGoalkeeper }))
+                          }
+                          className="rounded-2xl border border-slate-600 px-3 py-1 text-xs font-semibold text-slate-300"
+                        >
+                          Marcar GK
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="mt-3 text-sm text-slate-500">Nenhum jogador de linha disponível.</p>
+              )}
+            </div>
+
+            <div className="border-t border-slate-800 pt-4">
+              <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Goleiros</p>
+              {goalkeeperPlayers.length ? (
+                <ul className="mt-3 space-y-3">
+                  {goalkeeperPlayers.map((player) => (
+                    <li
+                      key={player.id}
+                      className={`flex flex-wrap items-center gap-4 rounded-2xl border px-4 py-3 text-sm transition ${
+                        player.isPresent ? "border-emerald-400/40 bg-emerald-500/5" : "border-slate-700 bg-slate-900/60"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={player.isPresent}
+                          onChange={(event) =>
+                            updatePlayer(player.id, (current) => ({ ...current, isPresent: event.target.checked }))
+                          }
+                          className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-emerald-500 focus:ring-emerald-500"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-white">{player.nome}</p>
+                        <p className="text-xs text-slate-400">Goleiro dedicado</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updatePlayer(player.id, (current) => ({ ...current, isGoalkeeper: !current.isGoalkeeper }))
+                        }
+                        className="rounded-2xl border border-slate-600 px-3 py-1 text-xs font-semibold text-slate-300"
+                      >
+                        Remover GK
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-3 text-sm text-slate-500">
+                  Nao ha goleiros marcados. Utilize o botao "Marcar GK" nos jogadores de linha para trazer para esta lista.
+                </p>
+              )}
+            </div>
+          </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-slate-700 px-6 py-10 text-center text-sm text-slate-400">
             Nenhum jogador carregado. Certifique-se de selecionar um grupo com atletas cadastrados.

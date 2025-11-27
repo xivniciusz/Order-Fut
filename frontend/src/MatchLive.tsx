@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useActiveGroup } from "./ActiveGroupContext";
 import type { RecentMatchSummary } from "./dashboardApi";
 import {
@@ -76,7 +76,16 @@ export default function MatchLive({ token }: MatchLiveProps) {
   const [rotateLoading, setRotateLoading] = useState<number | null>(null);
   const [finishLoading, setFinishLoading] = useState(false);
   const [clockRunning, setClockRunning] = useState(false);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [clockMode, setClockMode] = useState<"countup" | "countdown">("countup");
+  const [clockSeconds, setClockSeconds] = useState(0);
+  const [countdownMinutesInput, setCountdownMinutesInput] = useState("10");
+  const [warningSecondsInput, setWarningSecondsInput] = useState("60");
+  const [countdownTargetSeconds, setCountdownTargetSeconds] = useState(600);
+  const [warningSeconds, setWarningSeconds] = useState(60);
+  const [audioEnabled, setAudioEnabled] = useState(true);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const warningPlayedRef = useRef(false);
+  const endPlayedRef = useRef(false);
 
   const [eventForm, setEventForm] = useState({
     tipo: "goal" as EventType,
@@ -84,6 +93,41 @@ export default function MatchLive({ token }: MatchLiveProps) {
     assistPlayerId: "",
     description: "",
   });
+
+  const resetAudioFlags = useCallback(() => {
+    warningPlayedRef.current = false;
+    endPlayedRef.current = false;
+  }, []);
+
+  const playTone = useCallback(
+    (type: "warning" | "end") => {
+      if (!audioEnabled || typeof window === "undefined" || typeof window.AudioContext === "undefined") {
+        return;
+      }
+      const duration = type === "warning" ? 0.18 : 0.4;
+      const frequency = type === "warning" ? 880 : 440;
+      const context = audioContextRef.current ?? new window.AudioContext();
+      audioContextRef.current = context;
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.type = "sine";
+      oscillator.frequency.value = frequency;
+      gain.gain.value = 0.1;
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start();
+      oscillator.stop(context.currentTime + duration);
+    },
+    [audioEnabled],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     setEventForm((prev) => ({ ...prev, playerId: "", assistPlayerId: "" }));
@@ -118,6 +162,13 @@ export default function MatchLive({ token }: MatchLiveProps) {
 
   const assistOptions = useMemo(() => fieldPlayers, [fieldPlayers]);
 
+  const orderedTeams = useMemo(() => {
+    if (!matchDetail?.teams) {
+      return [] as Array<[string, MatchDetailPlayer[]]>;
+    }
+    return Object.entries(matchDetail.teams).sort((a, b) => Number(a[0]) - Number(b[0]));
+  }, [matchDetail]);
+
   const playerTeamMap = useMemo(() => {
     const map = new Map<string, number | null>();
     if (!matchDetail) {
@@ -132,10 +183,12 @@ export default function MatchLive({ token }: MatchLiveProps) {
   }, [matchDetail]);
 
   const scoreboard = useMemo(() => {
-    let team1 = 0;
-    let team2 = 0;
+    const board: Record<string, number> = {};
+    orderedTeams.forEach(([teamKey]) => {
+      board[teamKey] = 0;
+    });
     if (!matchDetail) {
-      return { team1, team2 };
+      return board;
     }
     const events = matchDetail.events ?? [];
     events.forEach((event) => {
@@ -143,14 +196,14 @@ export default function MatchLive({ token }: MatchLiveProps) {
         return;
       }
       const team = playerTeamMap.get(event.player_id);
-      if (team === 1) {
-        team1 += 1;
-      } else if (team === 2) {
-        team2 += 1;
+      if (!team) {
+        return;
       }
+      const key = String(team);
+      board[key] = (board[key] ?? 0) + 1;
     });
-    return { team1, team2 };
-  }, [matchDetail, playerTeamMap]);
+    return board;
+  }, [matchDetail, orderedTeams, playerTeamMap]);
 
   const fetchMatch = useCallback(
     async (matchId: string, { silent = false }: { silent?: boolean } = {}) => {
@@ -199,28 +252,53 @@ export default function MatchLive({ token }: MatchLiveProps) {
 
   useEffect(() => {
     if (!matchDetail) {
+      setClockRunning(false);
+      setClockSeconds(0);
+      resetAudioFlags();
       return;
     }
     setClockRunning(false);
+    resetAudioFlags();
+    if (clockMode === "countdown") {
+      setClockSeconds(countdownTargetSeconds);
+      return;
+    }
     const startsAt = new Date(matchDetail.starts_at).getTime();
     if (!Number.isNaN(startsAt)) {
       const now = Date.now();
       const diff = Math.max(0, Math.floor((now - startsAt) / 1000));
-      setElapsedSeconds(diff);
+      setClockSeconds(diff);
     } else {
-      setElapsedSeconds(0);
+      setClockSeconds(0);
     }
-  }, [matchDetail?.starts_at]);
+  }, [matchDetail?.starts_at, clockMode, countdownTargetSeconds, resetAudioFlags]);
 
   useEffect(() => {
     if (!clockRunning) {
       return;
     }
     const interval = setInterval(() => {
-      setElapsedSeconds((prev) => prev + 1);
+      setClockSeconds((prev) => {
+        if (clockMode === "countdown") {
+          const next = Math.max(prev - 1, 0);
+          if (warningSeconds > 0 && next === warningSeconds && !warningPlayedRef.current) {
+            playTone("warning");
+            warningPlayedRef.current = true;
+          }
+          if (next === 0) {
+            if (!endPlayedRef.current) {
+              playTone("end");
+              endPlayedRef.current = true;
+            }
+            setClockRunning(false);
+          }
+          return next;
+        }
+        return prev + 1;
+      });
     }, 1000);
     return () => clearInterval(interval);
-  }, [clockRunning]);
+  }, [clockRunning, clockMode, warningSeconds, playTone]);
 
   const handleLoadMatch = () => fetchMatch(matchIdInput.trim());
 
@@ -299,7 +377,28 @@ export default function MatchLive({ token }: MatchLiveProps) {
 
   const handleResetClock = () => {
     setClockRunning(false);
-    setElapsedSeconds(0);
+    resetAudioFlags();
+    if (clockMode === "countdown") {
+      setClockSeconds(countdownTargetSeconds);
+      return;
+    }
+    setClockSeconds(0);
+  };
+
+  const handleApplyCountdown = () => {
+    const rawMinutes = Math.floor(Number(countdownMinutesInput)) || 0;
+    const minutes = Math.min(Math.max(rawMinutes, 1), 90);
+    const totalSeconds = minutes * 60;
+    const rawWarning = Math.floor(Number(warningSecondsInput)) || 0;
+    const warningValue = Math.max(Math.min(rawWarning, totalSeconds), 0);
+    setCountdownMinutesInput(String(minutes));
+    setWarningSecondsInput(String(warningValue));
+    setCountdownTargetSeconds(totalSeconds);
+    setWarningSeconds(warningValue);
+    if (clockMode === "countdown" && !clockRunning) {
+      setClockSeconds(totalSeconds);
+      resetAudioFlags();
+    }
   };
 
   const detailLoaded = Boolean(matchDetail);
@@ -397,8 +496,27 @@ export default function MatchLive({ token }: MatchLiveProps) {
           </header>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded-2xl border border-slate-800/50 bg-slate-950/40 p-4 text-center">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Cronometro</p>
-              <p className="mt-2 text-4xl font-semibold text-white">{formatClock(elapsedSeconds)}</p>
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
+                <p className="uppercase tracking-[0.3em]">Cronometro</p>
+                <div className="flex gap-1">
+                  {(
+                    [
+                      { key: "countup", label: "Progressivo" },
+                      { key: "countdown", label: "Regressivo" },
+                    ] as const
+                  ).map((option) => (
+                    <button
+                      key={option.key}
+                      type="button"
+                      className={`rounded-2xl border px-3 py-1 ${clockMode === option.key ? "border-emerald-500 text-emerald-200" : "border-slate-700 text-slate-400"}`}
+                      onClick={() => setClockMode(option.key)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <p className="mt-3 text-4xl font-semibold text-white">{formatClock(clockSeconds)}</p>
               <div className="mt-4 flex flex-wrap justify-center gap-2 text-xs">
                 <button
                   type="button"
@@ -417,34 +535,83 @@ export default function MatchLive({ token }: MatchLiveProps) {
                   Reiniciar
                 </button>
               </div>
+              {clockMode === "countdown" && (
+                <div className="mt-4 space-y-2 text-left text-xs text-slate-400">
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <label className="space-y-1">
+                      <span className="block text-[0.6rem] uppercase tracking-[0.3em] text-slate-500">Duracao (min)</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={90}
+                        className="w-full rounded-2xl border border-slate-800/60 bg-slate-950/60 px-3 py-2 text-white"
+                        value={countdownMinutesInput}
+                        onChange={(event) => setCountdownMinutesInput(event.target.value)}
+                      />
+                    </label>
+                    <label className="space-y-1">
+                      <span className="block text-[0.6rem] uppercase tracking-[0.3em] text-slate-500">Aviso final (s)</span>
+                      <input
+                        type="number"
+                        min={0}
+                        className="w-full rounded-2xl border border-slate-800/60 bg-slate-950/60 px-3 py-2 text-white"
+                        value={warningSecondsInput}
+                        onChange={(event) => setWarningSecondsInput(event.target.value)}
+                      />
+                    </label>
+                  </div>
+                  <button
+                    type="button"
+                    className="w-full rounded-2xl border border-emerald-500/60 px-3 py-2 text-emerald-200"
+                    onClick={handleApplyCountdown}
+                  >
+                    Aplicar configuracao
+                  </button>
+                  <p className="text-[0.65rem] text-slate-500">Alertas soam no aviso configurado e quando o tempo zera.</p>
+                </div>
+              )}
+              <label className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-400">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border border-slate-700 bg-slate-950"
+                  checked={audioEnabled}
+                  onChange={(event) => setAudioEnabled(event.target.checked)}
+                />
+                Alertas sonoros
+              </label>
             </div>
             <div className="rounded-2xl border border-slate-800/50 bg-slate-950/40 p-4 text-center">
               <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Placar</p>
-              <div className="mt-3 flex items-center justify-center gap-4 text-3xl font-semibold text-white">
-                <span>{scoreboard.team1}</span>
-                <span className="text-base text-slate-500">vs</span>
-                <span>{scoreboard.team2}</span>
-              </div>
+              {orderedTeams.length ? (
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  {orderedTeams.map(([teamKey]) => (
+                    <div key={teamKey} className="rounded-2xl border border-slate-800/70 bg-black/20 p-3">
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Time {teamKey}</p>
+                      <p className="mt-1 text-3xl font-semibold text-white">{scoreboard[teamKey] ?? 0}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-xs text-slate-500">Nenhuma equipe escalada.</p>
+              )}
               <p className="mt-3 text-xs text-slate-500">Gols somados pelos eventos registrados.</p>
             </div>
           </div>
           <div className="flex flex-wrap gap-3 text-xs">
-            <button
-              type="button"
-              onClick={() => handleRotateTeam(1)}
-              disabled={!detailLoaded || !matchDetail?.bench.length || rotateLoading === 1}
-              className="flex-1 rounded-2xl border border-slate-700 px-4 py-3 text-slate-200 disabled:opacity-50"
-            >
-              {rotateLoading === 1 ? "Rotacionando..." : "Entrar Time 1"}
-            </button>
-            <button
-              type="button"
-              onClick={() => handleRotateTeam(2)}
-              disabled={!detailLoaded || !matchDetail?.bench.length || rotateLoading === 2}
-              className="flex-1 rounded-2xl border border-slate-700 px-4 py-3 text-slate-200 disabled:opacity-50"
-            >
-              {rotateLoading === 2 ? "Rotacionando..." : "Entrar Time 2"}
-            </button>
+            {orderedTeams.map(([teamKey]) => {
+              const teamNumber = Number(teamKey);
+              return (
+                <button
+                  key={teamKey}
+                  type="button"
+                  onClick={() => handleRotateTeam(teamNumber)}
+                  disabled={!detailLoaded || !matchDetail?.bench.length || rotateLoading === teamNumber}
+                  className="flex-1 rounded-2xl border border-slate-700 px-4 py-3 text-slate-200 disabled:opacity-50"
+                >
+                  {rotateLoading === teamNumber ? "Rotacionando..." : `Entrar Time ${teamKey}`}
+                </button>
+              );
+            })}
             <button
               type="button"
               onClick={handleFinishMatch}
@@ -464,25 +631,29 @@ export default function MatchLive({ token }: MatchLiveProps) {
             <h3 className="text-lg font-semibold text-white">Escalacao atual</h3>
           </header>
           {detailLoaded ? (
-            <div className="grid gap-4 md:grid-cols-2">
-              {["1", "2"].map((teamKey) => (
-                <div key={teamKey} className="rounded-2xl border border-slate-800/60 bg-slate-950/40 p-4">
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Time {teamKey}</p>
-                  <ul className="mt-3 space-y-2 text-sm">
-                    {matchDetail?.teams?.[teamKey]?.length ? (
-                      matchDetail.teams[teamKey].map((player) => (
-                        <li key={player.match_player_id} className="rounded-2xl border border-slate-800/70 bg-black/20 px-3 py-2 text-slate-200">
-                          <span className="font-semibold">{player.nome}</span>
-                          {player.is_goalkeeper && <span className="ml-2 rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs text-emerald-200">GK</span>}
-                        </li>
-                      ))
-                    ) : (
-                      <li className="rounded-2xl border border-dashed border-slate-700 px-3 py-2 text-xs text-slate-500">Sem jogadores atribuídos.</li>
-                    )}
-                  </ul>
-                </div>
-              ))}
-            </div>
+            orderedTeams.length ? (
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {orderedTeams.map(([teamKey, players]) => (
+                  <div key={teamKey} className="rounded-2xl border border-slate-800/60 bg-slate-950/40 p-4">
+                    <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Time {teamKey}</p>
+                    <ul className="mt-3 space-y-2 text-sm">
+                      {players.length ? (
+                        players.map((player) => (
+                          <li key={player.match_player_id} className="rounded-2xl border border-slate-800/70 bg-black/20 px-3 py-2 text-slate-200">
+                            <span className="font-semibold">{player.nome}</span>
+                            {player.is_goalkeeper && <span className="ml-2 rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs text-emerald-200">GK</span>}
+                          </li>
+                        ))
+                      ) : (
+                        <li className="rounded-2xl border border-dashed border-slate-700 px-3 py-2 text-xs text-slate-500">Sem jogadores atribuídos.</li>
+                      )}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500">Nenhum time foi gerado para esta partida.</p>
+            )
           ) : (
             <p className="text-sm text-slate-500">Carregue uma partida para visualizar as equipes.</p>
           )}

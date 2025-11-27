@@ -77,7 +77,7 @@ Fluxo novo para planejar jogos/treinos, controlar presenca e gerar times equilib
 | ------ | --------------------------------- | --------- |
 | POST   | `/matches`                        | Cria uma sessao de partida a partir de um `group_id`, definindo titulo, data/hora, local, tamanho dos times e se os goleiros devem ficar fixos. |
 | POST   | `/matches/{id}/players`           | Sincroniza toda a lista de jogadores daquele grupo com status de presenca, marcacao de goleiro e ordem de chegada (drag and drop). |
-| POST   | `/matches/{id}/generate-teams`    | Valida se ha atletas suficientes e gera automaticamente dois times + banco seguindo a ordem cadastrada e, opcionalmente, respeitando goleiros fixos. |
+| POST   | `/matches/{id}/generate-teams`    | Valida se ha atletas suficientes e distribui automaticamente os jogadores em N times equilibrados + banco seguindo a ordem cadastrada e, opcionalmente, respeitando goleiros fixos. |
 
 Novos modelos estao em `backend/app/models.py`: `Match` agora possui `team_size`, `goalkeepers_fixed` e `generated_at`, e a tabela `match_players` armazena presenca, ordem e time final. Os DTOs (`MatchCreateRequest`, `MatchPlayersSyncRequest`, `GenerateTeamsResponse` etc.) estao em `backend/app/schemas.py`, enquanto o fluxo completo vive em `backend/app/routes/matches.py`.
 
@@ -92,7 +92,7 @@ Depois de gerar os times, acompanhe o jogo em tempo real usando a nova aba **Par
 | POST   | `/matches/{id}/finish`       | Marca a partida como finalizada e registra `finished_at`. |
 | POST   | `/events`                    | Registra gols, cartoes, assistencias, presencas ou substituicoes. |
 
-O componente React `MatchLive.tsx` controla cronometro local, placar calculado a partir dos eventos e atualizacao automatica a cada 10 segundos. Use o botao "Copiar ID" em `MatchSetup.tsx` para colar rapidamente na aba ao vivo.
+O componente React `MatchLive.tsx` agora oferece cronometro local com modos progressivo/regressivo, configuracao de duracao, aviso sonoro e alerta final, alem de calcular o placar a partir dos eventos e atualizar os dados a cada 10 segundos. Ele tambem renderiza quantos times tiverem sido gerados (placar, cards e botoes de rotacao) para acomodar jogos com rodizios maiores. Use o botao "Copiar ID" em `MatchSetup.tsx` para colar rapidamente na aba ao vivo.
 
 > **Migracoes:** rode o script `backend/live_match_migration.sql` no seu banco PostgreSQL para garantir que colunas (`team_size`, `goalkeepers_fixed`, `generated_at`, `finished_at`, `assist_player_id`, `description`) e a tabela `match_players` existam antes de usar o modo ao vivo.
 

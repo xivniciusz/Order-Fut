@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+import math
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -82,12 +83,13 @@ def _match_detail(match: Match, db: Session) -> schemas.MatchDetailResponse:
         .all()
     )
 
-    teams: dict[str, list[schemas.MatchDetailPlayer]] = {"1": [], "2": []}
+    teams: dict[str, list[schemas.MatchDetailPlayer]] = {}
     bench: list[schemas.MatchDetailPlayer] = []
     for entry, player in entries:
         serialized = _serialize_match_player(entry, player)
-        if entry.team_number in (1, 2):
-            teams[str(entry.team_number)].append(serialized)
+        if entry.team_number:
+            key = str(entry.team_number)
+            teams.setdefault(key, []).append(serialized)
         else:
             bench.append(serialized)
 
@@ -214,52 +216,29 @@ def generate_match_teams(
     )
 
     present_entries = [item for item in entries if item[0].is_present]
-    if len(present_entries) < team_size * 2:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Quantidade insuficiente de jogadores presentes para gerar os times.")
+    line_entries = [item for item in present_entries if not item[0].is_goalkeeper]
+    goalkeeper_entries = [item for item in present_entries if item[0].is_goalkeeper]
 
-    teams: dict[int, list[tuple[MatchPlayer, Player]]] = {1: [], 2: []}
-    bench: list[tuple[MatchPlayer, Player]] = []
+    if len(line_entries) < team_size * 2:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Quantidade insuficiente de jogadores de linha para montar pelo menos duas equipes.")
 
-    queue = present_entries.copy()
-    if goalkeepers_fixed:
-        keepers = [item for item in queue if item[0].is_goalkeeper]
-        if keepers:
-            first_keeper = keepers[0]
-            teams[1].append(first_keeper)
-            queue.remove(first_keeper)
-        if len(keepers) > 1:
-            second_keeper = keepers[1]
-            teams[2].append(second_keeper)
-            queue.remove(second_keeper)
+    teams_count = max(2, math.ceil(len(line_entries) / team_size))
+    teams: dict[int, list[tuple[MatchPlayer, Player]]] = {number: [] for number in range(1, teams_count + 1)}
 
-    team_cycle = [1, 2]
-    cycle_index = 0
-    for item in queue:
-        available = None
-        for _ in range(2):
-            candidate = team_cycle[cycle_index % 2]
-            cycle_index += 1
-            if len(teams[candidate]) < team_size:
-                available = candidate
-                break
-        if available is None:
-            bench.append(item)
-            continue
-        teams[available].append(item)
+    for index, (entry, player) in enumerate(line_entries):
+        team_number = min(index // team_size, teams_count - 1) + 1
+        entry.team_number = team_number
+        teams[team_number].append((entry, player))
 
-    for team_number, members in teams.items():
-        if len(members) > team_size:
-            bench.extend(members[team_size:])
-            teams[team_number] = members[:team_size]
+    for idx, (entry, player) in enumerate(goalkeeper_entries):
+        preferred_team = entry.team_number if goalkeepers_fixed and entry.team_number in teams else None
+        team_number = preferred_team or ((idx % teams_count) + 1)
+        entry.team_number = team_number
+        teams[team_number].append((entry, player))
 
-    assigned_ids = {member[0].id for members in teams.values() for member in members}
-
-    for team_number, members in teams.items():
-        for entry, _ in members:
-            entry.team_number = team_number
     for entry, _ in present_entries:
-        if entry.id not in assigned_ids:
-            entry.team_number = None
+        if entry.team_number is None:
+            entry.team_number = 1
 
     match.team_size = team_size
     match.goalkeepers_fixed = goalkeepers_fixed
@@ -276,9 +255,8 @@ def generate_match_teams(
         )
         for team_number, members in teams.items()
     ]
-    response_bench = [_serialize_generated_player(entry, player) for entry, player in bench]
 
-    return schemas.GenerateTeamsResponse(teams=response_teams, bench=response_bench)
+    return schemas.GenerateTeamsResponse(teams=response_teams, bench=[])
 
 
 @router.get("/{match_id}", response_model=schemas.MatchDetailResponse, status_code=status.HTTP_200_OK)
