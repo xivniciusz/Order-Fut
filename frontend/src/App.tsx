@@ -376,10 +376,11 @@ function App() {
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 lg:flex-row">
         <section className="flex-1 rounded-3xl border border-slate-800 bg-slate-900/60 p-10 shadow-2xl">
           <p className="text-sm uppercase tracking-[0.3em] text-emerald-400">Order Fut</p>
-          <h1 className="mt-6 text-4xl font-semibold leading-tight text-white">Acesso rapido para atletas, comissao e torcedores.</h1>
+          <h1 className="mt-6 text-4xl font-semibold leading-tight text-white">Painel de comando para o gestor do clube.</h1>
           <p className="mt-4 text-lg text-slate-300">
-            Utilize os formularios ao lado para criar uma conta, entrar ou recuperar o acesso. Toda a experiencia foi pensada
-            para dispositivos moveis e escritorio, com mensagens diretas para o usuario final.
+            Centralize escalações, estatísticas individuais e presença nos treinos em um único ambiente seguro. Crie a conta
+            do seu grupo para desbloquear dashboards de performance, registro financeiro e comunicação direta com a equipe.
+            Utilize o formulário ao lado para liberar o acesso dos administradores e manter todo o clube sincronizado.
           </p>
           {authResult && (
             <div className="mt-8 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-6 text-sm text-emerald-100">
