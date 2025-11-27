@@ -6,7 +6,7 @@ from typing import Callable
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func
+from sqlalchemy import func, desc
 from sqlalchemy.orm import Session
 
 from .. import schemas
@@ -93,10 +93,10 @@ def group_stats(
     players_map = {player.id: player for player in players}
 
     year_rows = (
-        db.query(func.date_part("year", Match.starts_at))
+        db.query(func.date_part("year", Match.starts_at).label("year"))
         .filter(Match.group_id == group.id)
-        .distinct()
-        .order_by(func.date_part("year", Match.starts_at).desc())
+        .group_by("year")
+        .order_by(desc("year"))
         .all()
     )
     available_years = [int(row[0]) for row in year_rows if row[0] is not None]
