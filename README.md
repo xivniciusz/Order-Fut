@@ -41,6 +41,7 @@ Dependencias principais ja listadas no `pyproject.toml`:
    ```powershell
    npm run dev
    ```
+   A raiz do app agora apresenta as telas de **login**, **cadastro**, **recuperacao** e **redefinicao** de senha, todas apontando para o backend configurado via `VITE_API_BASE_URL`.
 
 Configure o backend usado no fetch criando `frontend/.env` a partir do `.env.example`:
 ```
