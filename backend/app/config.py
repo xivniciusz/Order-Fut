@@ -10,6 +10,10 @@ class Settings(BaseModel):
         default="postgresql+psycopg://postgres:postgres@localhost:5432/order_fut",
         alias="DATABASE_URL",
     )
+    allowed_origins: list[str] = Field(
+        default_factory=lambda: ["http://localhost:5173"],
+        alias="ALLOWED_ORIGINS",
+    )
 
     class Config:
         populate_by_name = True
@@ -23,6 +27,10 @@ def get_settings() -> Settings:
             "DATABASE_URL",
             "postgresql+psycopg://postgres:postgres@localhost:5432/order_fut",
         ),
+        allowed_origins=os.getenv(
+            "ALLOWED_ORIGINS",
+            "http://localhost:5173,https://orderfut.netlify.app",
+        ).split(","),
     )
 
 
