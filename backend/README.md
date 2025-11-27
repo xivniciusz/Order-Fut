@@ -7,3 +7,5 @@ Variaveis principais do `.env`:
 - `ALLOWED_ORIGINS`: dominios liberados no CORS.
 - `FRONTEND_BASE_URL`: usado para montar links de redefinicao de senha.
 - `JWT_SECRET`, `JWT_ALGORITHM` e tempos de expiracao para access/refresh e reset token.
+
+Hashing de senhas utiliza **PBKDF2-SHA256** via Passlib, eliminando o limite de 72 bytes do bcrypt e garantindo compatibilidade com senhas longas.

@@ -29,6 +29,7 @@ Dependencias principais ja listadas no `pyproject.toml`:
 - `psycopg[binary]`
 - `sqlalchemy`
 - `python-dotenv`
+- `passlib[pbkdf2]` para hashing PBKDF2-SHA256
 
 ## Frontend (React + Vite + Tailwind)
 

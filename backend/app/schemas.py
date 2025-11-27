@@ -19,19 +19,16 @@ class UserPublic(UserBase):
     created_at: datetime
 
 
-MAX_PASSWORD_LENGTH = 72
-
-
 class RegisterRequest(BaseModel):
     nome: str = Field(min_length=3, max_length=120)
     email: EmailStr
-    password: str = Field(min_length=8, max_length=MAX_PASSWORD_LENGTH)
-    confirm_password: str = Field(min_length=8, max_length=MAX_PASSWORD_LENGTH)
+    password: str = Field(min_length=8)
+    confirm_password: str = Field(min_length=8)
 
 
 class LoginRequest(BaseModel):
     email: EmailStr
-    password: str = Field(min_length=8, max_length=MAX_PASSWORD_LENGTH)
+    password: str = Field(min_length=8)
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -40,8 +37,8 @@ class ForgotPasswordRequest(BaseModel):
 
 class ResetPasswordRequest(BaseModel):
     token: str
-    password: str = Field(min_length=8, max_length=MAX_PASSWORD_LENGTH)
-    confirm_password: str = Field(min_length=8, max_length=MAX_PASSWORD_LENGTH)
+    password: str = Field(min_length=8)
+    confirm_password: str = Field(min_length=8)
 
 
 class TokenPair(BaseModel):
