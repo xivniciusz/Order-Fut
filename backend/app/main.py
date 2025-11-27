@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from .config import settings
 from .database import Base, engine, get_session
-from .routes import auth
+from .routes import auth, dashboard
 
 app = FastAPI(title=settings.app_name, debug=settings.debug)
 
@@ -23,6 +23,7 @@ def init_database() -> None:
 
 
 app.include_router(auth.router)
+app.include_router(dashboard.router)
 
 
 @app.get("/health", tags=["saude"])

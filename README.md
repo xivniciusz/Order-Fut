@@ -31,6 +31,17 @@ Dependencias principais ja listadas no `pyproject.toml`:
 - `python-dotenv`
 - `passlib[pbkdf2]` para hashing PBKDF2-SHA256
 
+### Endpoints do dashboard
+
+Todos os endpoints abaixo **requerem** cabecalho `Authorization: Bearer <access_token>` emitido pelos fluxos `/auth/*`.
+
+| Metodo | Rota                        | Descricao |
+| ------ | --------------------------- | --------- |
+| GET    | `/dashboard/groups/active`  | Lista os grupos do usuario autenticado com totais de atletas, jogos e proximo compromisso. |
+| GET    | `/dashboard/stats/overview` | Retorna resumos do grupo selecionado (totais de atletas/jogos/gols/presencas, ultimos confrontos e artilharia). Aceita `group_id` opcional via query string. |
+
+Os modelos `Group`, `Player`, `Match` e `Event` já estão configurados em `backend/app/models.py`, então basta popular essas tabelas para ver dados reais no painel.
+
 ## Frontend (React + Vite + Tailwind)
 
 1. Instale dependencias com npm ou pnpm (exemplo com npm):
@@ -43,6 +54,18 @@ Dependencias principais ja listadas no `pyproject.toml`:
    npm run dev
    ```
    A raiz do app agora apresenta as telas de **login**, **cadastro**, **recuperacao** e **redefinicao** de senha, todas apontando para o backend configurado via `VITE_API_BASE_URL`.
+
+### Dashboard React
+
+- Apos login bem-sucedido o usuario e redirecionado para `Dashboard.tsx`, que utiliza o `ActiveGroupProvider` para buscar `/dashboard/groups/active` e `/dashboard/stats/overview`.
+- O painel inclui:
+   - Barra lateral com grupos ativos e acao de sincronizar.
+   - Cards com totais (atletas, partidas, gols e presencas) + listas de ultimos jogos e artilharia.
+   - Alternancia manual de tema (claro/escuro) com Tailwind em modo `class`.
+- Para testar manualmente:
+   1. Faca login/cadastro e copie o token exibido na sessao.
+   2. Popule as tabelas no Postgres (players, matches, events) para alimentar os cards.
+   3. Utilize a acao "Sincronizar" ou recarregue a pagina para refazer os fetches.
 
 Configure o backend usado no fetch criando `frontend/.env` a partir do `.env.example`:
 ```
@@ -70,4 +93,4 @@ Depois atualize `DATABASE_URL` no backend para refletir host, porta e credenciai
 2. `cd backend && poetry install && poetry run uvicorn app.main:app --reload`
 3. `cd frontend && npm install && npm run dev`
 
-A aplicacao React consulta `http://localhost:8000/health` para validar o backend.
+A aplicacao React consulta `http://localhost:8000/health` para validar o backend. Depois de autenticado, o dashboard automaticamente consome os novos endpoints protegidos para gerar o painel.

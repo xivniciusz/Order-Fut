@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import Any
 
-from jose import jwt
+from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 from .config import settings
@@ -30,3 +30,19 @@ def create_access_and_refresh_tokens(user_id: str) -> tuple[str, str, int]:
     access_token, access_expires = create_token(user_id, settings.access_token_expires_minutes)
     refresh_token, _ = create_token(user_id, settings.refresh_token_expires_minutes)
     return access_token, refresh_token, access_expires
+
+
+class InvalidTokenError(Exception):
+    """Excecao usada quando o token nao pode ser validado."""
+
+
+def decode_token(token: str) -> str:
+    try:
+        payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
+    except JWTError as exc:
+        raise InvalidTokenError("Token invalido.") from exc
+
+    subject = payload.get("sub")
+    if not subject:
+        raise InvalidTokenError("Token sem identificador de usuario.")
+    return str(subject)

@@ -55,3 +55,52 @@ class AuthResponse(TokenPair):
 class MessageResponse(BaseModel):
     message: str
     detail: Optional[str] = None
+
+
+class ActiveGroupSummary(BaseModel):
+    id: str
+    nome: str
+    descricao: Optional[str] = None
+    created_at: datetime
+    total_players: int
+    total_matches: int
+    next_match: Optional[datetime] = None
+
+
+class ActiveGroupsResponse(BaseModel):
+    groups: list[ActiveGroupSummary]
+
+
+class StatsTotals(BaseModel):
+    players: int
+    matches: int
+    goals: int
+    cards: int
+    attendance_entries: int
+
+
+class SelectedGroup(BaseModel):
+    id: str
+    nome: str
+
+
+class RecentMatchSummary(BaseModel):
+    id: str
+    titulo: str
+    status: str
+    starts_at: datetime
+    placar_pro: Optional[int]
+    placar_contra: Optional[int]
+
+
+class TopScorer(BaseModel):
+    player_id: str
+    player_nome: str
+    goals: int
+
+
+class StatsOverviewResponse(BaseModel):
+    group: SelectedGroup
+    totals: StatsTotals
+    recent_matches: list[RecentMatchSummary]
+    top_scorers: list[TopScorer]

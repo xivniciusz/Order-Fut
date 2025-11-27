@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { authApi, AuthResponse } from "./api";
+import Dashboard from "./Dashboard";
 
 type AuthView = "login" | "register" | "forgot" | "reset";
 
@@ -236,6 +237,16 @@ function App() {
     </button>
   );
 
+  const handleLogout = () => {
+    setAuthResult(null);
+    setView("login");
+    setAlert(null);
+  };
+
+  if (authResult) {
+    return <Dashboard auth={authResult} onLogout={handleLogout} />;
+  }
+
   const renderForm = () => {
     switch (view) {
       case "login":
@@ -382,18 +393,6 @@ function App() {
             do seu grupo para desbloquear dashboards de performance, registro financeiro e comunicação direta com a equipe.
             Utilize o formulário ao lado para liberar o acesso dos administradores e manter todo o clube sincronizado.
           </p>
-          {authResult && (
-            <div className="mt-8 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-6 text-sm text-emerald-100">
-              <p className="text-base font-semibold text-emerald-300">Sessao ativa</p>
-              <p className="mt-2 text-slate-200">
-                Usuario: <span className="font-medium">{authResult.user.nome}</span> ({authResult.user.email})
-              </p>
-              <p className="mt-1 text-slate-300">O token expira em {authResult.expires_in / 60} minutos.</p>
-              <p className="mt-4 text-xs text-slate-400">
-                Guarde os tokens com seguranca. Em ambiente real, utilize armazenamento seguro e conexoes HTTPS.
-              </p>
-            </div>
-          )}
         </section>
 
         <section className="w-full max-w-md self-center rounded-3xl border border-slate-800 bg-slate-900/80 p-8 shadow-2xl">
