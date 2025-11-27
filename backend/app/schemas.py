@@ -20,6 +20,26 @@ class UserPublic(UserBase):
     created_at: datetime
 
 
+class UserPreferences(BaseModel):
+    theme: str = Field(default="system")
+    notifications_email: bool = Field(default=True)
+    notifications_push: bool = Field(default=False)
+    auto_rotate_goalkeepers: bool = Field(default=True)
+
+
+class UserPreferencesUpdate(BaseModel):
+    theme: Optional[str] = Field(default=None)
+    notifications_email: Optional[bool] = Field(default=None)
+    notifications_push: Optional[bool] = Field(default=None)
+    auto_rotate_goalkeepers: Optional[bool] = Field(default=None)
+
+
+class UserProfileResponse(UserBase):
+    id: str
+    created_at: datetime
+    preferences: UserPreferences
+
+
 class RegisterRequest(BaseModel):
     nome: str = Field(min_length=3, max_length=120)
     email: EmailStr

@@ -6,7 +6,10 @@ import Groups from "./Groups";
 import MatchLive from "./MatchLive";
 import MatchSetup from "./MatchSetup";
 import Players from "./Players";
+import Settings from "./Settings";
+import { useThemePreference } from "./ThemeContext";
 import Stats from "./Stats";
+import { userApi } from "./userApi";
 
 export type DashboardProps = {
   auth: AuthResponse;
@@ -262,10 +265,11 @@ function DashboardBody({ auth }: { auth: AuthResponse }) {
 }
 
 export default function Dashboard({ auth, onLogout }: DashboardProps) {
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [view, setView] = useState<"overview" | "groups" | "players" | "organize" | "live" | "stats">("overview");
+  const { resolvedTheme, setThemePreference } = useThemePreference();
+  const [view, setView] = useState<"overview" | "groups" | "players" | "organize" | "stats" | "live" | "settings">("overview");
   const [playersGroupId, setPlayersGroupId] = useState<string | null>(null);
-  const themeClasses = theme === "dark" ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-900";
+  const [themeSyncError, setThemeSyncError] = useState<string | null>(null);
+  const themeClasses = resolvedTheme === "dark" ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-900";
 
   const navigateToPlayers = (groupId: string) => {
     setPlayersGroupId(groupId);
@@ -276,9 +280,19 @@ export default function Dashboard({ auth, onLogout }: DashboardProps) {
     setView("groups");
   };
 
+  const handleQuickThemeToggle = () => {
+    const nextTheme = resolvedTheme === "dark" ? "light" : "dark";
+    setThemePreference(nextTheme);
+    setThemeSyncError(null);
+    void userApi.updatePreferences(auth.access_token, { theme: nextTheme }).catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : "Nao foi possivel sincronizar o tema.";
+      setThemeSyncError(message);
+    });
+  };
+
   return (
     <ActiveGroupProvider token={auth.access_token}>
-      <div className={theme === "dark" ? "dark" : ""}>
+      <div className={resolvedTheme === "dark" ? "dark" : ""}>
         <div className={`${themeClasses} min-h-screen transition-colors`}>
           <header className="border-b border-slate-200/10 bg-white/5 px-6 py-4 text-sm shadow-lg shadow-slate-900/10 dark:border-slate-900 dark:bg-slate-950/60">
             <div className="mx-auto flex w-full max-w-6xl items-center justify-between">
@@ -290,10 +304,10 @@ export default function Dashboard({ auth, onLogout }: DashboardProps) {
               <div className="flex items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
+                  onClick={handleQuickThemeToggle}
                   className="rounded-2xl border border-slate-200/50 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-emerald-400 hover:text-emerald-400 dark:border-slate-700 dark:text-slate-200"
                 >
-                  {theme === "dark" ? "Tema claro" : "Tema escuro"}
+                  {resolvedTheme === "dark" ? "Tema claro" : "Tema escuro"}
                 </button>
                 <button
                   type="button"
@@ -305,6 +319,12 @@ export default function Dashboard({ auth, onLogout }: DashboardProps) {
               </div>
             </div>
           </header>
+
+          {themeSyncError && (
+            <div className="mx-auto mt-4 w-full max-w-6xl rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-2 text-xs text-rose-200">
+              {themeSyncError}
+            </div>
+          )}
 
           <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-10 lg:flex-row">
             <div className="w-full lg:w-80">
@@ -378,6 +398,17 @@ export default function Dashboard({ auth, onLogout }: DashboardProps) {
                 >
                   Partida ao vivo
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setView("settings")}
+                  className={`rounded-2xl px-4 py-2 text-xs font-semibold transition ${
+                    view === "settings"
+                      ? "bg-emerald-500 text-emerald-950 shadow-lg shadow-emerald-500/30"
+                      : "border border-slate-700 text-slate-300"
+                  }`}
+                >
+                  Configuracoes
+                </button>
               </div>
               {view === "overview" && <DashboardBody auth={auth} />}
               {view === "groups" && <Groups token={auth.access_token} onNavigateToPlayers={navigateToPlayers} />}
@@ -387,6 +418,7 @@ export default function Dashboard({ auth, onLogout }: DashboardProps) {
               {view === "organize" && <MatchSetup token={auth.access_token} />}
               {view === "stats" && <Stats token={auth.access_token} />}
               {view === "live" && <MatchLive token={auth.access_token} />}
+              {view === "settings" && <Settings token={auth.access_token} authUser={auth.user} onLogout={onLogout} />}
             </div>
           </main>
         </div>
