@@ -9,12 +9,27 @@ __pycache__/
 venv/
 *.sqlite3
 
+# Local DBs and environment
+backend/order_fut.db
+*.db
+*.sqlite
+*.sqlite3
+
+# Local env files
+backend/.env
+
 # Node
 frontend/node_modules/
 frontend/dist/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Frontend build output
+/frontend/dist/
+
+# Python caches recursive
+**/__pycache__/
 
 # IDE / OS
 .vscode/
