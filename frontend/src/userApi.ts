@@ -1,4 +1,4 @@
-import { API_BASE_URL, ApiError } from "./api";
+import { API_BASE_URL, ApiError, fetchWithAuth } from "./api";
 import type { ThemePreference } from "./ThemeContext";
 
 export type UserPreferences = {
@@ -40,42 +40,8 @@ const mergePreferences = (raw?: Partial<UserPreferences> | null): UserPreference
   theme: sanitizeTheme(raw?.theme),
 });
 
-async function authorizedRequest<T>(token: string, path: string, init?: RequestInit): Promise<T> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
-
-  try {
-    const response = await fetch(`${API_BASE_URL}${path}`, {
-      method: "GET",
-      ...init,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        ...(init?.headers ?? {}),
-      },
-      signal: controller.signal,
-    });
-
-    const raw = await response.text();
-    const data = raw ? JSON.parse(raw) : {};
-
-    if (!response.ok) {
-      const detail = typeof data?.detail === "string" ? data.detail : data?.message;
-      throw new ApiError(detail || "Nao foi possivel completar a solicitacao.");
-    }
-
-    return data as T;
-  } catch (error) {
-    if (error instanceof ApiError) {
-      throw error;
-    }
-    if ((error as DOMException).name === "AbortError") {
-      throw new ApiError("Tempo limite atingido. Tente novamente.");
-    }
-    throw new ApiError("Falha de rede. Verifique sua conexao.");
-  } finally {
-    clearTimeout(timeout);
-  }
+async function authorizedRequest<T>(token: string | undefined, path: string, init?: RequestInit): Promise<T> {
+  return fetchWithAuth<T>(path, { method: init?.method ?? "GET", ...(init ?? {}) }, token, 15000);
 }
 
 export const userApi = {

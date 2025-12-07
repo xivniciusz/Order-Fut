@@ -156,6 +156,21 @@ VITE_API_BASE_URL=https://order-fut.onrender.com
 ```
 Localmente voce pode manter `http://localhost:8000`.
 
+### Autenticação e sessão (importante)
+
+- Comportamento atual: o frontend persiste o `AuthResponse` (contendo `access_token` e `refresh_token`) em `localStorage` para que a sessão sobreviva ao recarregamento da página. O usuário permanecerá logado enquanto o token de acesso não expirar ou até que faça `logout`.
+- Logout: ao executar logout a sessão é removida do `localStorage` e o usuário precisa autenticar novamente.
+- Expiração: o `access_token` expira conforme configurado no backend (`ACCESS_TOKEN_EXPIRES_MINUTES`). Quando expira, o frontend deve obter um novo `access_token` usando o `refresh_token` — atualmente não há endpoint `/auth/refresh` implementado por padrão. Para evitar logouts inesperados recomendamos implementar a renovação automática (ver item abaixo).
+- Segurança: armazenar tokens em `localStorage` é simples e funciona, porém expõe tokens ao risco de XSS. Para produção é melhor usar cookies `HttpOnly` (para `refresh_token`) e um `access_token` curto em memória, ou usar cookies `HttpOnly` para ambos conforme o modelo de sessão desejado.
+
+Recomendações imediatas:
+- Implementar um endpoint `/auth/refresh` que troque o `refresh_token` por um novo `access_token` e, opcionalmente, um novo `refresh_token`. Esse endpoint deve validar a validade do `refresh_token` e ser seguro quanto a repetição/revogação.
+- No frontend, ao reidratar a sessão a partir do `localStorage`, valide o `access_token` chamando um endpoint protegido (ex.: `/users/me`). Se receber `401`, chame `/auth/refresh` para renovar o token e, se ainda assim falhar, forçar o login.
+- Preferir cookies `HttpOnly` para armazenar o `refresh_token` e reduzir superfície de ataque; em cenários com múltiplos clientes (apps e navegadores) avaliar trade-offs.
+
+Nota sobre segredos e arquivos locais:
+- Nao comite arquivos de ambiente (`.env`) ou bancos locais (`backend/order_fut.db`) no repositório. Esses itens ja estao listados no `.gitignore`, e recomendamos manter segredos em variaveis de ambiente do servidor de producao.
+
 Pacotes ja configurados em `package.json`:
 - `react` e `react-dom`
 - `vite` e `@vitejs/plugin-react`

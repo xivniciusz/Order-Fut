@@ -1,4 +1,4 @@
-import { API_BASE_URL, ApiError } from "./api";
+import { API_BASE_URL, ApiError, fetchWithAuth } from "./api";
 
 export type GroupDto = {
   id: string;
@@ -22,42 +22,9 @@ export type GroupPayload = {
 
 const DEFAULT_TIMEOUT = 15000;
 
-async function request<T>(path: string, method: string, token: string, body?: unknown): Promise<T> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT);
-
-  try {
-    const response = await fetch(`${API_BASE_URL}${path}`, {
-      method,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: body ? JSON.stringify(body) : undefined,
-      signal: controller.signal,
-    });
-
-    const raw = await response.text();
-    const data = raw ? JSON.parse(raw) : {};
-
-    if (!response.ok) {
-      const detail = typeof data?.detail === "string" ? data.detail : data?.message;
-      throw new ApiError(detail || "Nao foi possivel concluir a operacao.");
-    }
-
-    return data as T;
-  } catch (error) {
-    if (error instanceof ApiError) {
-      throw error;
-    }
-    if ((error as DOMException).name === "AbortError") {
-      throw new ApiError("Tempo limite atingido. Tente novamente.");
-    }
-    throw new ApiError("Falha de rede. Verifique sua conexao.");
-  } finally {
-    clearTimeout(timeout);
-  }
+async function request<T>(path: string, method: string, token: string | undefined, body?: unknown): Promise<T> {
+  const init: RequestInit = { method, body: body ? JSON.stringify(body) : undefined };
+  return fetchWithAuth<T>(path, init, token, DEFAULT_TIMEOUT);
 }
 
 export const groupsApi = {
