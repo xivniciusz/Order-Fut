@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -25,8 +25,9 @@ def to_auth_response(user: User, db: Session) -> schemas.AuthResponse:
     access, refresh, expires_in = create_access_and_refresh_tokens(str(user.id))
     # Persist refresh token hash for revocation/rotation support
     token_hash = hashlib.sha256(refresh.encode("utf-8")).hexdigest()
-    expires_at = datetime.utcnow() + timedelta(minutes=settings.refresh_token_expires_minutes)
-    refresh_entry = RefreshToken(token_hash=token_hash, user_id=user.id, issued_at=datetime.utcnow(), expires_at=expires_at)
+    now = datetime.now(timezone.utc)
+    expires_at = now + timedelta(minutes=settings.refresh_token_expires_minutes)
+    refresh_entry = RefreshToken(token_hash=token_hash, user_id=user.id, issued_at=now, expires_at=expires_at)
     db.add(refresh_entry)
     db.commit()
     return schemas.AuthResponse(
@@ -77,7 +78,8 @@ def forgot_password(payload: schemas.ForgotPasswordRequest, db: Session = Depend
         return schemas.MessageResponse(message="Se o email estiver cadastrado, enviaremos instrucoes em instantes.")
 
     raw_token, token_hash = PasswordResetToken.generate_token_pair()
-    expires_at = datetime.utcnow() + timedelta(minutes=settings.password_reset_token_minutes)
+    now = datetime.now(timezone.utc)
+    expires_at = now + timedelta(minutes=settings.password_reset_token_minutes)
     reset_entry = PasswordResetToken(token_hash=token_hash, user_id=user.id, expires_at=expires_at)
     db.add(reset_entry)
     db.commit()
@@ -107,7 +109,7 @@ def reset_password(payload: schemas.ResetPasswordRequest, db: Session = Depends(
         raise HTTPException(status_code=400, detail="Token invalido.")
 
     user.senha_hash = hash_password(payload.password)
-    reset_entry.used_at = datetime.utcnow()
+    reset_entry.used_at = datetime.now(timezone.utc)
     db.add(user)
     db.add(reset_entry)
     db.commit()
@@ -123,7 +125,12 @@ def refresh_token(payload: _schemas.RefreshRequest, db: Session = Depends(get_se
     entry = db.query(RefreshToken).filter(RefreshToken.token_hash == token_hash).first()
     if not entry:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token invalido.")
-    if entry.revoked_at is not None or entry.expires_at < datetime.utcnow():
+    # Normalize timezone-aware comparison: convert stored expires_at to aware UTC if naive
+    now = datetime.now(timezone.utc)
+    entry_expires = entry.expires_at
+    if entry_expires is not None and entry_expires.tzinfo is None:
+        entry_expires = entry_expires.replace(tzinfo=timezone.utc)
+    if entry.revoked_at is not None or (entry_expires is not None and entry_expires < now):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token invalido ou expirado.")
 
     # Decode to ensure token is structurally valid and get user id
@@ -133,14 +140,15 @@ def refresh_token(payload: _schemas.RefreshRequest, db: Session = Depends(get_se
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token invalido.")
 
     # Revoke the previous token (rotation)
-    entry.revoked_at = datetime.utcnow()
+    entry.revoked_at = datetime.now(timezone.utc)
     db.add(entry)
 
     # Issue new pair and persist new refresh token
     access, refresh, expires_in = create_access_and_refresh_tokens(user_id)
     new_hash = hashlib.sha256(refresh.encode("utf-8")).hexdigest()
-    expires_at = datetime.utcnow() + timedelta(minutes=settings.refresh_token_expires_minutes)
-    new_entry = RefreshToken(token_hash=new_hash, user_id=entry.user_id, issued_at=datetime.utcnow(), expires_at=expires_at)
+    now2 = datetime.now(timezone.utc)
+    expires_at = now2 + timedelta(minutes=settings.refresh_token_expires_minutes)
+    new_entry = RefreshToken(token_hash=new_hash, user_id=entry.user_id, issued_at=now2, expires_at=expires_at)
     db.add(new_entry)
     db.commit()
     return _schemas.RefreshResponse(access_token=access, refresh_token=refresh, expires_in=expires_in)
@@ -152,7 +160,7 @@ def logout(payload: _schemas.RefreshRequest, db: Session = Depends(get_session))
     token_hash = hashlib.sha256(payload.refresh_token.encode("utf-8")).hexdigest()
     entry = db.query(RefreshToken).filter(RefreshToken.token_hash == token_hash).first()
     if entry and entry.revoked_at is None:
-        entry.revoked_at = datetime.utcnow()
+        entry.revoked_at = datetime.now(timezone.utc)
         db.add(entry)
         db.commit()
     return schemas.MessageResponse(message="Logout realizado com sucesso.")
