@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Optional
+
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
@@ -18,7 +20,7 @@ DEFAULT_PREFERENCES = {
 }
 
 
-def _build_preferences(raw: dict | None) -> schemas.UserPreferences:
+def _build_preferences(raw: Optional[dict]) -> schemas.UserPreferences:
     combined = {**DEFAULT_PREFERENCES, **(raw or {})}
     return schemas.UserPreferences(**combined)
 

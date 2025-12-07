@@ -1,6 +1,12 @@
 from functools import lru_cache
 from pydantic import BaseModel, Field
 import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Carregar variáveis do .env
+env_file = Path(__file__).parent.parent / ".env"
+load_dotenv(env_file)
 
 
 class Settings(BaseModel):

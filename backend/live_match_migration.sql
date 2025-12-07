@@ -6,7 +6,10 @@ ALTER TABLE matches
     ADD COLUMN IF NOT EXISTS team_size integer NOT NULL DEFAULT 5,
     ADD COLUMN IF NOT EXISTS goalkeepers_fixed boolean NOT NULL DEFAULT false,
     ADD COLUMN IF NOT EXISTS generated_at timestamptz,
-    ADD COLUMN IF NOT EXISTS finished_at timestamptz;
+    ADD COLUMN IF NOT EXISTS finished_at timestamptz,
+    ADD COLUMN IF NOT EXISTS active_team_one integer,
+    ADD COLUMN IF NOT EXISTS active_team_two integer,
+    ADD COLUMN IF NOT EXISTS team_queue jsonb DEFAULT '[]'::jsonb;
 
 -- Ajustes na tabela events
 ALTER TABLE events
@@ -29,8 +32,16 @@ CREATE TABLE IF NOT EXISTS match_players (
     is_goalkeeper boolean NOT NULL DEFAULT false,
     order_position integer NOT NULL DEFAULT 0,
     team_number integer,
-    created_at timestamptz NOT NULL DEFAULT NOW()
+    created_at timestamptz NOT NULL DEFAULT NOW(),
+    has_played boolean NOT NULL DEFAULT false
 );
 
 CREATE INDEX IF NOT EXISTS idx_match_players_match_id ON match_players(match_id);
 CREATE INDEX IF NOT EXISTS idx_match_players_player_id ON match_players(player_id);
+
+ALTER TABLE match_players
+    ADD COLUMN IF NOT EXISTS has_played boolean NOT NULL DEFAULT false;
+
+-- Preferencias do usuario utilizadas pelo frontend
+ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS preferences jsonb DEFAULT '{}'::jsonb;

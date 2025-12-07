@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -57,13 +59,15 @@ def list_active_groups(current_user: User = Depends(get_current_user), db: Sessi
     }
 
     summaries = []
+    current_year = datetime.utcnow().year
     for group in groups:
         summaries.append(
             schemas.ActiveGroupSummary(
                 id=str(group.id),
                 nome=group.nome,
                 descricao=group.descricao,
-                ano_base=group.ano_base,
+                foundation_year=group.foundation_year,
+                current_year=current_year,
                 created_at=group.created_at,
                 total_players=int(player_counts.get(group.id, 0)),
                 total_matches=int(match_counts.get(group.id, 0)),
@@ -77,7 +81,7 @@ def list_active_groups(current_user: User = Depends(get_current_user), db: Sessi
 
 @router.get("/stats/overview", response_model=schemas.StatsOverviewResponse, status_code=status.HTTP_200_OK)
 def stats_overview(
-    group_id: UUID | None = Query(default=None, description="Opcional: filtra por um grupo especifico"),
+    group_id: Optional[UUID] = Query(default=None, description="Opcional: filtra por um grupo especifico"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_session),
 ) -> schemas.StatsOverviewResponse:

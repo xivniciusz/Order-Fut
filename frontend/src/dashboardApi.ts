@@ -4,7 +4,8 @@ export type ActiveGroupSummary = {
   id: string;
   nome: string;
   descricao?: string | null;
-  ano_base?: number | null;
+  foundation_year: number;
+  current_year: number;
   created_at: string;
   total_players: number;
   total_matches: number;

@@ -3,7 +3,8 @@ import { API_BASE_URL, ApiError } from "./api";
 export type GroupDto = {
   id: string;
   nome: string;
-  ano_base?: number | null;
+  foundation_year: number;
+  current_year: number;
   descricao?: string | null;
   is_active: boolean;
   created_at: string;
@@ -16,7 +17,6 @@ export type GroupsListResponse = {
 
 export type GroupPayload = {
   nome: string;
-  ano_base?: number | null;
   descricao?: string | null;
 };
 

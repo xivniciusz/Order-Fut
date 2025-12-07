@@ -117,7 +117,6 @@ class PlayersListResponse(BaseModel):
 
 class GroupBase(BaseModel):
     nome: str = Field(min_length=3, max_length=160)
-    ano_base: Optional[int] = Field(default=None, ge=1900, le=2100)
     descricao: Optional[str] = Field(default=None, max_length=500)
 
 
@@ -127,14 +126,14 @@ class GroupCreate(GroupBase):
 
 class GroupUpdate(BaseModel):
     nome: Optional[str] = Field(default=None, min_length=3, max_length=160)
-    ano_base: Optional[int] = Field(default=None, ge=1900, le=2100)
     descricao: Optional[str] = Field(default=None, max_length=500)
 
 
 class GroupResponse(BaseModel):
     id: str
     nome: str
-    ano_base: Optional[int]
+    foundation_year: int
+    current_year: int
     descricao: Optional[str]
     is_active: bool
     created_at: datetime
@@ -149,7 +148,8 @@ class ActiveGroupSummary(BaseModel):
     id: str
     nome: str
     descricao: Optional[str] = None
-    ano_base: Optional[int] = None
+    foundation_year: int
+    current_year: int
     created_at: datetime
     total_players: int
     total_matches: int

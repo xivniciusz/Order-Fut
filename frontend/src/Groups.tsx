@@ -4,13 +4,11 @@ import { GroupDto, GroupPayload, groupsApi } from "./groupsApi";
 
 type FormState = {
   nome: string;
-  ano_base: string;
   descricao: string;
 };
 
 const initialForm: FormState = {
   nome: "",
-  ano_base: "",
   descricao: "",
 };
 
@@ -91,7 +89,6 @@ export default function Groups({ token, onNavigateToPlayers }: GroupsProps) {
   const openEditModal = (group: GroupDto) => {
     setFormValues({
       nome: group.nome,
-      ano_base: group.ano_base ? String(group.ano_base) : "",
       descricao: group.descricao ?? "",
     });
     setModal({ type: "edit", group });
@@ -108,11 +105,6 @@ export default function Groups({ token, onNavigateToPlayers }: GroupsProps) {
     if (values.nome.trim().length < 3) {
       return "O nome precisa ter pelo menos 3 caracteres.";
     }
-    if (values.ano_base) {
-      if (values.ano_base < 1900 || values.ano_base > 2100) {
-        return "Ano base deve estar entre 1900 e 2100.";
-      }
-    }
     return null;
   };
 
@@ -123,7 +115,6 @@ export default function Groups({ token, onNavigateToPlayers }: GroupsProps) {
     const normalized: GroupPayload = {
       nome: formValues.nome.trim(),
       descricao: formValues.descricao.trim() ? formValues.descricao.trim() : undefined,
-      ano_base: formValues.ano_base ? Number(formValues.ano_base) : undefined,
     };
     const validation = validateForm(normalized);
     if (validation) {
@@ -233,25 +224,6 @@ export default function Groups({ token, onNavigateToPlayers }: GroupsProps) {
             />
           </label>
           <label className="flex flex-col gap-2 text-sm text-slate-200">
-            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Ano base</span>
-            <input
-              className={inputBase}
-              type="number"
-              min={1900}
-              max={2100}
-              value={formValues.ano_base}
-              onChange={(event) => {
-                const value = event.target.value;
-                if (!value) {
-                  setFormValues((prev) => ({ ...prev, ano_base: "" }));
-                } else {
-                  setFormValues((prev) => ({ ...prev, ano_base: value }));
-                }
-              }}
-              placeholder="2025"
-            />
-          </label>
-          <label className="flex flex-col gap-2 text-sm text-slate-200">
             <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Descricao</span>
             <textarea
               className={`${inputBase} min-h-[120px] resize-none`}
@@ -322,16 +294,16 @@ export default function Groups({ token, onNavigateToPlayers }: GroupsProps) {
               </div>
               <div className="mt-4 grid grid-cols-3 gap-3 text-center text-xs">
                 <div className="rounded-2xl bg-black/20 p-3">
-                  <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-400">Ano base</p>
-                  <p className="text-lg font-semibold text-white">{group.ano_base ?? "--"}</p>
+                  <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-400">Ano atual</p>
+                  <p className="text-lg font-semibold text-white">{group.current_year}</p>
+                </div>
+                <div className="rounded-2xl bg-black/20 p-3">
+                  <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-400">Fundação</p>
+                  <p className="text-lg font-semibold text-white">{group.foundation_year}</p>
                 </div>
                 <div className="rounded-2xl bg-black/20 p-3">
                   <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-400">Jogadores</p>
                   <p className="text-lg font-semibold text-white">{group.players_count}</p>
-                </div>
-                <div className="rounded-2xl bg-black/20 p-3">
-                  <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-400">Criado</p>
-                  <p className="text-lg font-semibold text-white">{new Date(group.created_at).getFullYear()}</p>
                 </div>
               </div>
               {group.descricao && <p className="mt-3 text-sm text-slate-300">{group.descricao}</p>}

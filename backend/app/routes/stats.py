@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Callable
+from typing import Callable, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, Integer
 from sqlalchemy.orm import Session
 
 from .. import schemas
@@ -15,6 +15,16 @@ from ..dependencies import get_current_user
 from ..models import Event, EventType, Group, Match, MatchPlayer, MatchStatus, Player, User
 
 router = APIRouter(prefix="/stats", tags=["stats"])
+
+
+def _extract_year(date_column):
+    """Extract year from date column, compatible with both PostgreSQL and SQLite."""
+    return func.cast(func.strftime("%Y", date_column), Integer)
+
+
+def _truncate_to_month(date_column):
+    """Truncate date to month start, compatible with both PostgreSQL and SQLite."""
+    return func.date(date_column, 'start of month')
 
 
 def _get_group_for_user(db: Session, group_id: UUID, user_id: UUID) -> Group:
@@ -27,7 +37,7 @@ def _get_group_for_user(db: Session, group_id: UUID, user_id: UUID) -> Group:
 def _collect_event_counts(
     db: Session,
     group_id: UUID,
-    year: int | None,
+    year: Optional[int],
     column_selector: Callable[[Event], object],
     event_filter: Callable[[Event], object],
 ) -> dict[UUID, int]:
@@ -38,12 +48,12 @@ def _collect_event_counts(
         .filter(event_filter(Event))
     )
     if year:
-        query = query.filter(func.date_part("year", Match.starts_at) == year)
+        query = query.filter(_extract_year(Match.starts_at) == year)
     rows = query.group_by(column_selector(Event)).all()
     return {row[0]: int(row[1]) for row in rows if row[0] is not None}
 
 
-def _collect_match_counts(db: Session, group_id: UUID, year: int | None) -> dict[UUID, int]:
+def _collect_match_counts(db: Session, group_id: UUID, year: Optional[int]) -> dict[UUID, int]:
     query = (
         db.query(MatchPlayer.player_id, func.count(func.distinct(MatchPlayer.match_id)))
         .join(Match, Match.id == MatchPlayer.match_id)
@@ -54,7 +64,7 @@ def _collect_match_counts(db: Session, group_id: UUID, year: int | None) -> dict
         )
     )
     if year:
-        query = query.filter(func.date_part("year", Match.starts_at) == year)
+        query = query.filter(_extract_year(Match.starts_at) == year)
     rows = query.group_by(MatchPlayer.player_id).all()
     return {row[0]: int(row[1]) for row in rows}
 
@@ -82,7 +92,7 @@ def _format_month_label(moment: datetime) -> str:
 @router.get("/group/{group_id}", response_model=schemas.GroupStatsResponse, status_code=status.HTTP_200_OK)
 def group_stats(
     group_id: UUID,
-    year: int | None = Query(default=None, ge=1900, le=2100),
+    year: Optional[int] = Query(default=None, ge=1900, le=2100),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_session),
 ) -> schemas.GroupStatsResponse:
@@ -97,7 +107,7 @@ def group_stats(
     players_map = {player.id: player for player in players}
 
     year_rows = (
-        db.query(func.date_part("year", Match.starts_at).label("year"))
+        db.query(func.cast(func.strftime("%Y", Match.starts_at), Integer).label("year"))
         .filter(Match.group_id == group.id)
         .group_by("year")
         .order_by(desc("year"))
@@ -155,7 +165,7 @@ def group_stats(
         matches_period_total = int(
             db.query(func.count(Match.id))
             .filter(Match.group_id == group.id, Match.status == MatchStatus.FINISHED)
-            .filter(func.date_part("year", Match.starts_at) == year)
+            .filter(_extract_year(Match.starts_at) == year)
             .scalar()
             or 0
         )
@@ -219,19 +229,19 @@ def group_stats(
 
     chart_limit = 6
     chart_match_query = (
-        db.query(func.date_trunc("month", Match.starts_at).label("month"), func.count(Match.id))
+        db.query(_truncate_to_month(Match.starts_at).label("month"), func.count(Match.id))
         .select_from(Match)
         .filter(Match.group_id == group.id, Match.status == MatchStatus.FINISHED)
     )
     chart_goal_query = (
-        db.query(func.date_trunc("month", Match.starts_at).label("month"), func.count(Event.id))
+        db.query(_truncate_to_month(Match.starts_at).label("month"), func.count(Event.id))
         .select_from(Match)
         .join(Event, Event.match_id == Match.id)
         .filter(Match.group_id == group.id, Match.status == MatchStatus.FINISHED, Event.tipo == EventType.GOAL)
     )
     if year:
-        chart_match_query = chart_match_query.filter(func.date_part("year", Match.starts_at) == year)
-        chart_goal_query = chart_goal_query.filter(func.date_part("year", Match.starts_at) == year)
+        chart_match_query = chart_match_query.filter(_extract_year(Match.starts_at) == year)
+        chart_goal_query = chart_goal_query.filter(_extract_year(Match.starts_at) == year)
     else:
         cutoff = datetime.utcnow() - timedelta(days=180)
         chart_match_query = chart_match_query.filter(Match.starts_at >= cutoff)
@@ -316,7 +326,7 @@ def player_stats(
     year_stats: dict[int, dict[str, int]] = defaultdict(lambda: {"goals": 0, "assists": 0, "cards": 0, "matches": 0})
 
     goal_rows = (
-        db.query(func.date_part("year", Match.starts_at).label("year"), func.count(Event.id))
+        db.query(_extract_year(Match.starts_at).label("year"), func.count(Event.id))
         .join(Match, Match.id == Event.match_id)
         .filter(Match.group_id == group.id, Event.player_id == player.id, Event.tipo == EventType.GOAL)
         .group_by("year")
@@ -327,7 +337,7 @@ def player_stats(
             year_stats[int(year_value)]["goals"] = int(count)
 
     assist_rows = (
-        db.query(func.date_part("year", Match.starts_at).label("year"), func.count(Event.id))
+        db.query(_extract_year(Match.starts_at).label("year"), func.count(Event.id))
         .join(Match, Match.id == Event.match_id)
         .filter(Match.group_id == group.id, Event.assist_player_id == player.id)
         .group_by("year")
@@ -338,7 +348,7 @@ def player_stats(
             year_stats[int(year_value)]["assists"] = int(count)
 
     card_rows = (
-        db.query(func.date_part("year", Match.starts_at).label("year"), func.count(Event.id))
+        db.query(_extract_year(Match.starts_at).label("year"), func.count(Event.id))
         .join(Match, Match.id == Event.match_id)
         .filter(Match.group_id == group.id, Event.player_id == player.id, Event.tipo == EventType.CARD)
         .group_by("year")
@@ -349,7 +359,7 @@ def player_stats(
             year_stats[int(year_value)]["cards"] = int(count)
 
     match_rows = (
-        db.query(func.date_part("year", Match.starts_at).label("year"), func.count(func.distinct(MatchPlayer.match_id)))
+        db.query(_extract_year(Match.starts_at).label("year"), func.count(func.distinct(MatchPlayer.match_id)))
         .join(Match, Match.id == MatchPlayer.match_id)
         .filter(
             MatchPlayer.player_id == player.id,

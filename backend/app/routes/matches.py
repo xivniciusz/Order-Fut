@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Optional
 import math
 from uuid import UUID
 
@@ -61,7 +62,7 @@ def _serialize_match_player(entry: MatchPlayer, player: Player) -> schemas.Match
     )
 
 
-def _serialize_event_row(event: Event, primary: Player | None, assist: Player | None) -> schemas.EventResponse:
+def _serialize_event_row(event: Event, primary: Optional[Player], assist: Optional[Player]) -> schemas.EventResponse:
     return schemas.EventResponse(
         id=str(event.id),
         match_id=str(event.match_id),

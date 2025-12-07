@@ -49,12 +49,17 @@ Endpoints protegidos que alimentam a nova tela de gestao de grupos:
 | Metodo | Rota                          | Descricao |
 | ------ | ----------------------------- | --------- |
 | GET    | `/groups`                     | Retorna todos os grupos do usuario com contagem de jogadores e status ativo. |
-| POST   | `/groups`                     | Cria um grupo (campos: `nome`, `ano_base`, `descricao`). O primeiro grupo ja nasce ativo. |
-| PUT    | `/groups/{id}`                | Atualiza nome, ano base ou descricao do grupo informado. |
+| POST   | `/groups`                     | Cria um grupo (campos: `nome`, `descricao`). O primeiro grupo ja nasce ativo. `foundation_year` e `current_year` sao calculados automaticamente. |
+| PUT    | `/groups/{id}`                | Atualiza nome ou descricao do grupo informado (os campos de ano nao sao edistaveis). |
 | DELETE | `/groups/{id}`                | Remove o grupo. Se ele estiver ativo, o backend promove o proximo grupo para ativo. |
 | POST   | `/groups/{id}/set-active`     | Marca o grupo como ativo e desativa os demais do mesmo usuario. |
 
-Tabela `groups` agora contem `id`, `user_id`, `nome`, `descricao`, `ano_base`, `is_active`, `created_at` e `updated_at` (alem do relacionamento com `players` e `matches`).
+Tabela `groups` agora contem `id`, `user_id`, `nome`, `descricao`, `foundation_year` (ano de criacao, estatico), `current_year` (ano dinâmico, muda automaticamente com o passar dos anos), `is_active`, `created_at` e `updated_at` (alem do relacionamento com `players` e `matches`).
+
+**Lógica de anos:**
+- `foundation_year`: Extraído automaticamente do ano de `created_at`. Representa quando o grupo foi criado (permanece constante).
+- `current_year`: Calculado em tempo real como o ano atual. Muda automaticamente a cada novo ano civil, refletindo o ano em que o grupo está acontecendo.
+- **Filtro de estatísticas**: A tela de estatísticas permite filtrar dados por qualquer ano anterior via query parameter `?year=YYYY`, possibilitando análises históricas completas.
 
 ### CRUD de jogadores
 

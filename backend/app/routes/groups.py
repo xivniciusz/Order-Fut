@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -15,10 +16,12 @@ router = APIRouter(prefix="/groups", tags=["groups"])
 
 
 def _group_to_response(group: Group, players_count: int) -> schemas.GroupResponse:
+    current_year = datetime.utcnow().year
     return schemas.GroupResponse(
         id=str(group.id),
         nome=group.nome,
-        ano_base=group.ano_base,
+        foundation_year=group.foundation_year,
+        current_year=current_year,
         descricao=group.descricao,
         is_active=group.is_active,
         created_at=group.created_at,
@@ -45,7 +48,7 @@ def _get_group_or_404(db: Session, group_id: UUID, user_id: UUID) -> Group:
     return group
 
 
-def _normalize_description(value: str | None) -> str | None:
+def _normalize_description(value: Optional[str]) -> Optional[str]:
     if value is None:
         return None
     cleaned = value.strip()
@@ -80,10 +83,12 @@ def create_group(payload: schemas.GroupCreate, current_user: User = Depends(get_
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ja existe um grupo com este nome.")
 
     has_active = db.query(Group).filter(Group.user_id == current_user.id, Group.is_active.is_(True)).first()
+    now = datetime.utcnow()
     group = Group(
         nome=payload.nome.strip(),
         descricao=_normalize_description(payload.descricao),
-        ano_base=payload.ano_base,
+        foundation_year=now.year,
+        current_year=now.year,
         user_id=current_user.id,
         is_active=has_active is None,
     )
@@ -102,15 +107,13 @@ def update_group(
 ) -> schemas.GroupResponse:
     group = _get_group_or_404(db, group_id, current_user.id)
 
-    if payload.nome is None and payload.ano_base is None and payload.descricao is None:
+    if payload.nome is None and payload.descricao is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Nenhum campo informado para atualizacao.")
 
     if payload.nome is not None:
         group.nome = payload.nome.strip()
     if payload.descricao is not None:
         group.descricao = _normalize_description(payload.descricao)
-    if payload.ano_base is not None:
-        group.ano_base = payload.ano_base
 
     db.add(group)
     db.commit()

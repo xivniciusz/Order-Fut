@@ -24,6 +24,27 @@
 - [x] Garantir documentacao atualizada
   (README principal revisado e comentarios removidos deste arquivo.)
 
+- [x] Refatorar lógica de anos dos grupos
+  (Implementado: `foundation_year` (estatico, ano de criacao) e `current_year` (dinamico, ano atual). Campo `ano_base` removido. Migracao SQL `group_year_migration.sql` preparada. Frontend compilado sem erros. README atualizado com nova lógica de filtro de estatísticas por ano.)
+
+## Proximas acoes necessarias
+
+### 1. Executar migration de grupos em producao
+Arquivo: `backend/group_year_migration.sql`
+- Conectar ao PostgreSQL de producao
+- Executar script para renomear `ano_base` para `current_year` e adicionar `foundation_year`
+- Validar que nao ha erros (comando: `\d groups` no psql deve exibir colunas `foundation_year` e `current_year`)
+
+### 2. Executar migration de partidas ao vivo em producao (se nao executada ainda)
+Arquivo: `backend/live_match_migration.sql`
+- Ja deve ter sido executada, mas confirmar se todas as colunas existem
+
+### 3. Validar em dev/staging (antes de producao)
+- Testar criacao de grupo: deve calcular `foundation_year` e `current_year` automaticamente
+- Testar edicao de grupo: campos de ano nao devem aparecer no formulario
+- Testar visualizacao de grupos: exibir "Ano atual" (current_year) e "Fundacao" (foundation_year)
+- Testar filtro de estatísticas: deve listar anos disponiveis e permitir filtro por ano
+
 ## Diretrizes de Execucao
 RASTREIO DE PROGRESSO:
 - Se houver ferramenta para gerenciar a lista acima, use-a para registrar o andamento.
@@ -58,6 +79,7 @@ REGRAS DE CONTEUDO DO PROJETO:
 - Evite adicionar links, integracoes ou midias desnecessarias.
 - Caso use assets de exemplo, avise que sao temporarios.
 - Garanta que cada componente tenha proposito claro dentro do fluxo solicitado.
+
 - Quando presumir alguma funcionalidade, confirme antes com o usuario.
 - Para projetos de extensao VS Code, consulte a doc apropriada.
 
