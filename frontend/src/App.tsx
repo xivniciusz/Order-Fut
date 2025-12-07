@@ -112,42 +112,47 @@ function App() {
     }
 
     // Rehidratar sessão persistida no localStorage
-    try {
-      const raw = localStorage.getItem("orderfut_auth");
-      if (raw) {
+    (async () => {
+      try {
+        const raw = localStorage.getItem("orderfut_auth");
+        if (!raw) return;
         const parsed = JSON.parse(raw) as AuthResponse;
-        if (parsed?.access_token) {
-          // Try to refresh tokens using refresh_token to ensure validity
-          if (parsed.refresh_token) {
+        if (!parsed?.access_token) return;
+
+        // If we have a refresh token, try to refresh to ensure validity
+        if (parsed.refresh_token) {
+          try {
+            const refreshed = await authApi.refresh({ refresh_token: parsed.refresh_token });
+            const merged: AuthResponse = {
+              ...parsed,
+              access_token: refreshed.access_token,
+              refresh_token: refreshed.refresh_token,
+              expires_in: refreshed.expires_in,
+            };
+            setAuthResult(merged);
             try {
-              const refreshed = await authApi.refresh({ refresh_token: parsed.refresh_token });
-              const merged: AuthResponse = {
-                ...parsed,
-                access_token: refreshed.access_token,
-                refresh_token: refreshed.refresh_token,
-                expires_in: refreshed.expires_in,
-              };
-              setAuthResult(merged);
-              try {
-                localStorage.setItem("orderfut_auth", JSON.stringify(merged));
-              } catch (err) {
-                // ignore
-              }
+              localStorage.setItem("orderfut_auth", JSON.stringify(merged));
             } catch (err) {
-              // Refresh failed, clear stored session
-              try {
-                localStorage.removeItem("orderfut_auth");
-              } catch (e) {}
+              // ignore storage errors
             }
-          } else {
-            // No refresh token, just set parsed value
-            setAuthResult(parsed);
+            return;
+          } catch (err) {
+            // Refresh failed, clear stored session
+            try {
+              localStorage.removeItem("orderfut_auth");
+            } catch (e) {
+              // ignore
+            }
+            return;
           }
         }
+
+        // No refresh token present: accept parsed value as-is
+        setAuthResult(parsed);
+      } catch (err) {
+        // ignore malformed localStorage
       }
-    } catch (err) {
-      // ignore malformed localStorage
-    }
+    })();
   }, [initialResetToken]);
 
   const handleError = (error: unknown) => {

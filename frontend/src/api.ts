@@ -16,11 +16,38 @@ export type MessageResponse = {
   message: string;
 };
 
+type RefreshResult = {
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+};
+
 export class ApiError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "ApiError";
   }
+}
+
+// Global in-flight refresh promise to dedupe concurrent refresh requests
+let ongoingRefresh: Promise<RefreshResult> | null = null;
+
+async function performRefresh(refreshToken: string): Promise<RefreshResult> {
+  if (!refreshToken) throw new ApiError("Sessao expirada. Faça login novamente.");
+  if (ongoingRefresh) return ongoingRefresh;
+
+  ongoingRefresh = authApi
+    .refresh({ refresh_token: refreshToken })
+    .then((res) => {
+      ongoingRefresh = null;
+      return res;
+    })
+    .catch((err) => {
+      ongoingRefresh = null;
+      throw err;
+    });
+
+  return ongoingRefresh;
 }
 
 async function postJson<T>(path: string, payload: unknown): Promise<T> {
@@ -114,14 +141,14 @@ export async function fetchWithAuth<T>(path: string, init?: RequestInit, token?:
     let response = await doRequest(access);
 
     if (response.status === 401) {
-      // Try refresh
+      // Try refresh (deduped globally)
       const stored2 = getStoredAuth();
       const refreshToken = stored2?.refresh_token;
       if (!refreshToken) {
         throw new ApiError("Sessao expirada. Faça login novamente.");
       }
       try {
-        const refreshed = await authApi.refresh({ refresh_token: refreshToken });
+        const refreshed = await performRefresh(refreshToken);
         const merged: AuthResponse = {
           ...(stored2 ?? ({} as AuthResponse)),
           access_token: refreshed.access_token,
