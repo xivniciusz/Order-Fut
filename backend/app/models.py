@@ -34,6 +34,11 @@ class User(Base):
         cascade="all, delete-orphan",
     )
     groups: Mapped[list["Group"]] = relationship("Group", back_populates="owner")
+    refresh_tokens: Mapped[list["RefreshToken"]] = relationship(
+        "RefreshToken",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
 
 class PasswordResetToken(Base):
@@ -53,6 +58,20 @@ class PasswordResetToken(Base):
         raw_token = secrets.token_urlsafe(48)
         digest = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
         return raw_token, digest
+
+
+class RefreshToken(Base):
+    __tablename__ = "refresh_tokens"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=default_uuid)
+    token_hash: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    revoked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+
+    user: Mapped[User] = relationship("User", back_populates="refresh_tokens")
 
 
 class Group(Base):

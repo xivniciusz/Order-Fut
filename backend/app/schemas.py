@@ -78,6 +78,14 @@ class MessageResponse(BaseModel):
     detail: Optional[str] = None
 
 
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
+class RefreshResponse(TokenPair):
+    pass
+
+
 class PlayerPosition(str, Enum):
     GK = "GK"
     DEF = "DEF"

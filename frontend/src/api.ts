@@ -73,4 +73,85 @@ export const authApi = {
     password: string;
     confirm_password: string;
   }) => postJson<MessageResponse>("/auth/reset-password", payload),
+  refresh: (payload: { refresh_token: string }) => postJson<{ access_token: string; refresh_token: string; expires_in: number }>("/auth/refresh", payload),
+  logout: (payload: { refresh_token: string }) => postJson<MessageResponse>("/auth/logout", payload),
 };
+
+
+export async function fetchWithAuth<T>(path: string, init?: RequestInit, token?: string, timeoutMs = 15000): Promise<T> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  const getStoredAuth = (): AuthResponse | null => {
+    try {
+      const raw = localStorage.getItem("orderfut_auth");
+      if (!raw) return null;
+      return JSON.parse(raw) as AuthResponse;
+    } catch (err) {
+      return null;
+    }
+  };
+
+  const doRequest = async (accessToken?: string) => {
+    const headers = new Headers(init?.headers as HeadersInit);
+    headers.set("Accept", "application/json");
+    if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
+    if (!(init && init.headers && (init.headers as any)["Content-Type"])) {
+      headers.set("Content-Type", "application/json");
+    }
+
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      ...init,
+      headers,
+      signal: controller.signal,
+    });
+    return response;
+  };
+
+  try {
+    const stored = getStoredAuth();
+    const access = token ?? stored?.access_token;
+    let response = await doRequest(access);
+
+    if (response.status === 401) {
+      // Try refresh
+      const stored2 = getStoredAuth();
+      const refreshToken = stored2?.refresh_token;
+      if (!refreshToken) {
+        throw new ApiError("Sessao expirada. Faça login novamente.");
+      }
+      try {
+        const refreshed = await authApi.refresh({ refresh_token: refreshToken });
+        const merged: AuthResponse = {
+          ...(stored2 ?? ({} as AuthResponse)),
+          access_token: refreshed.access_token,
+          refresh_token: refreshed.refresh_token,
+          expires_in: refreshed.expires_in,
+        };
+        try {
+          localStorage.setItem("orderfut_auth", JSON.stringify(merged));
+        } catch (err) {
+          // ignore
+        }
+        // retry once with new access token
+        response = await doRequest(refreshed.access_token);
+      } catch (err) {
+        throw new ApiError("Sessao expirada. Faça login novamente.");
+      }
+    }
+
+    const raw = await response.text();
+    const data = raw ? JSON.parse(raw) : {};
+    if (!response.ok) {
+      const detail = typeof data?.detail === "string" ? data.detail : data?.message;
+      throw new ApiError(detail || "Erro na requisicao autenticada.");
+    }
+    return data as T;
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    if ((error as DOMException).name === "AbortError") throw new ApiError("Tempo limite atingido. Tente novamente.");
+    throw new ApiError("Falha de rede. Verifique sua conexao.");
+  } finally {
+    clearTimeout(timeout);
+  }
+}

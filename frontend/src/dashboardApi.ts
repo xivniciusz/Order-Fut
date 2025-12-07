@@ -1,4 +1,4 @@
-import { API_BASE_URL, ApiError } from "./api";
+import { API_BASE_URL, ApiError, fetchWithAuth } from "./api";
 
 export type ActiveGroupSummary = {
   id: string;
@@ -54,40 +54,8 @@ export type StatsOverviewResponse = {
 
 const DEFAULT_TIMEOUT = 15000;
 
-async function getJson<T>(path: string, token: string): Promise<T> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT);
-
-  try {
-    const response = await fetch(`${API_BASE_URL}${path}`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-      },
-      signal: controller.signal,
-    });
-
-    const raw = await response.text();
-    const data = raw ? JSON.parse(raw) : {};
-
-    if (!response.ok) {
-      const detail = typeof data?.detail === "string" ? data.detail : data?.message;
-      throw new ApiError(detail || "Nao foi possivel carregar os dados.");
-    }
-
-    return data as T;
-  } catch (error) {
-    if (error instanceof ApiError) {
-      throw error;
-    }
-    if ((error as DOMException).name === "AbortError") {
-      throw new ApiError("Tempo limite atingido. Tente novamente.");
-    }
-    throw new ApiError("Falha de rede. Verifique sua conexao.");
-  } finally {
-    clearTimeout(timeout);
-  }
+async function getJson<T>(path: string, token: string | undefined): Promise<T> {
+  return fetchWithAuth<T>(path, { method: "GET" }, token, DEFAULT_TIMEOUT);
 }
 
 export const dashboardApi = {

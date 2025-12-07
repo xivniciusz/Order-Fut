@@ -110,6 +110,44 @@ function App() {
     if (initialResetToken) {
       setAlert({ type: "success", text: "Token localizado. Redefina sua senha abaixo." });
     }
+
+    // Rehidratar sessão persistida no localStorage
+    try {
+      const raw = localStorage.getItem("orderfut_auth");
+      if (raw) {
+        const parsed = JSON.parse(raw) as AuthResponse;
+        if (parsed?.access_token) {
+          // Try to refresh tokens using refresh_token to ensure validity
+          if (parsed.refresh_token) {
+            try {
+              const refreshed = await authApi.refresh({ refresh_token: parsed.refresh_token });
+              const merged: AuthResponse = {
+                ...parsed,
+                access_token: refreshed.access_token,
+                refresh_token: refreshed.refresh_token,
+                expires_in: refreshed.expires_in,
+              };
+              setAuthResult(merged);
+              try {
+                localStorage.setItem("orderfut_auth", JSON.stringify(merged));
+              } catch (err) {
+                // ignore
+              }
+            } catch (err) {
+              // Refresh failed, clear stored session
+              try {
+                localStorage.removeItem("orderfut_auth");
+              } catch (e) {}
+            }
+          } else {
+            // No refresh token, just set parsed value
+            setAuthResult(parsed);
+          }
+        }
+      }
+    } catch (err) {
+      // ignore malformed localStorage
+    }
   }, [initialResetToken]);
 
   const handleError = (error: unknown) => {
@@ -135,6 +173,12 @@ function App() {
         password: loginForm.password,
       });
       setAuthResult(data);
+      // Persist authentication so reloads keep the session
+      try {
+        localStorage.setItem("orderfut_auth", JSON.stringify(data));
+      } catch (err) {
+        // ignore storage errors
+      }
       setAlert({ type: "success", text: "Bem-vindo! Autenticacao concluida." });
     } catch (error) {
       handleError(error);
@@ -167,6 +211,11 @@ function App() {
         confirm_password: registerForm.confirm_password,
       });
       setAuthResult(data);
+      try {
+        localStorage.setItem("orderfut_auth", JSON.stringify(data));
+      } catch (err) {
+        // ignore storage errors
+      }
       setAlert({ type: "success", text: "Conta criada! Agora e so entrar com seus dados." });
       setLoginForm({ email: normalizeEmail(registerForm.email), password: registerForm.password });
       setView("login");
@@ -239,6 +288,11 @@ function App() {
 
   const handleLogout = () => {
     setAuthResult(null);
+    try {
+      localStorage.removeItem("orderfut_auth");
+    } catch (err) {
+      // ignore
+    }
     setView("login");
     setAlert(null);
   };
