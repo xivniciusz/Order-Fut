@@ -84,18 +84,18 @@ function GroupsPanel() {
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-sm uppercase tracking-[0.2em] text-slate-400">{group.nome}</p>
-                      {group.descricao && <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{group.descricao}</p>}
+                      <p className="text-sm uppercase tracking-[0.2em] text-slate-600">{group.nome}</p>
+                      {group.descricao && <p className="mt-1 text-sm text-slate-700 dark:text-slate-700">{group.descricao}</p>}
                     </div>
                     <span className="text-xs font-semibold text-emerald-400">{isSelected ? "Em uso" : "Selecionar"}</span>
                   </div>
-                  <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-slate-500 dark:text-slate-300">
+                  <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-slate-700 dark:text-slate-700">
                     <div className="rounded-xl bg-black/5 px-3 py-2 dark:bg-white/5">
-                      <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-400">Jogadores</p>
+                      <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-600">Jogadores</p>
                       <p className="text-lg font-semibold text-slate-800 dark:text-white">{group.total_players}</p>
                     </div>
                     <div className="rounded-xl bg-black/5 px-3 py-2 dark:bg-white/5">
-                      <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-400">Data</p>
+                      <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-600">Data</p>
                       <p className="text-lg font-semibold text-slate-800 dark:text-white">{new Date(group.created_at).toLocaleDateString("pt-BR")}</p>
                     </div>
                   </div>
@@ -105,7 +105,7 @@ function GroupsPanel() {
           })}
         </ul>
       ) : (
-        <div className="rounded-2xl border border-dashed border-slate-300/60 px-6 py-10 text-center text-sm text-slate-400 dark:border-slate-700">
+        <div className="rounded-2xl border border-dashed border-slate-300/60 px-6 py-10 text-center text-sm text-slate-600 dark:border-slate-700">
           Nenhum grupo encontrado. Cadastre atletas no backend para destravar os paines.
         </div>
       )}
@@ -115,9 +115,9 @@ function GroupsPanel() {
 
 const StatCard = ({ label, value, helper }: { label: string; value: string; helper: string }) => (
   <div className="rounded-3xl border border-slate-200/20 bg-white/5 p-5 shadow-lg shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900/50">
-    <p className="text-[0.65rem] uppercase tracking-[0.4em] text-slate-400">{label}</p>
+    <p className="text-[0.65rem] uppercase tracking-[0.4em] text-slate-600">{label}</p>
     <p className="mt-3 text-3xl font-semibold text-slate-900 dark:text-white">{value}</p>
-    <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">{helper}</p>
+    <p className="mt-1 text-xs text-slate-700 dark:text-slate-700">{helper}</p>
   </div>
 );
 
@@ -136,9 +136,9 @@ const MatchesList = ({ matches }: { matches: RecentMatchSummary[] }) => (
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <p className="text-sm font-semibold text-slate-900 dark:text-white">{match.titulo}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-300">{formatDateTime(match.starts_at)}</p>
+                <p className="text-xs text-slate-700 dark:text-slate-700">{formatDateTime(match.starts_at)}</p>
               </div>
-              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusColorMap[match.status] ?? "bg-slate-500/10 text-slate-400"}`}>
+              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusColorMap[match.status] ?? "bg-slate-500/10 text-slate-600"}`}>
                 {match.status === "scheduled"
                   ? "Agendado"
                   : match.status === "finished"
@@ -148,13 +148,13 @@ const MatchesList = ({ matches }: { matches: RecentMatchSummary[] }) => (
                   : match.status}
               </span>
             </div>
-            <div className="mt-3 grid grid-cols-2 gap-3 text-center text-xs text-slate-600 dark:text-slate-300">
+            <div className="mt-3 grid grid-cols-2 gap-3 text-center text-xs text-slate-600 dark:text-slate-700">
               <div className="rounded-2xl bg-white/60 p-3 dark:bg-white/5">
-                <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-400">Pro</p>
+                <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-600">Pro</p>
                 <p className="text-2xl font-semibold text-slate-900 dark:text-white">{match.placar_pro ?? "-"}</p>
               </div>
               <div className="rounded-2xl bg-white/60 p-3 dark:bg-white/5">
-                <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-400">Contra</p>
+                <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-600">Contra</p>
                 <p className="text-2xl font-semibold text-slate-900 dark:text-white">{match.placar_contra ?? "-"}</p>
               </div>
             </div>
@@ -162,7 +162,7 @@ const MatchesList = ({ matches }: { matches: RecentMatchSummary[] }) => (
         ))}
       </ul>
     ) : (
-      <p className="text-sm text-slate-500 dark:text-slate-300">Nenhuma partida registrada para este grupo.</p>
+      <p className="text-sm text-slate-700 dark:text-slate-700">Nenhuma partida registrada para este grupo.</p>
     )}
   </div>
 );
@@ -179,14 +179,14 @@ const TopScorersList = ({ scorers }: { scorers: TopScorer[] }) => (
           <li key={scorer.player_id} className="flex items-center justify-between rounded-2xl bg-black/5 px-4 py-3 text-sm dark:bg-white/5">
             <div>
               <p className="font-semibold text-slate-900 dark:text-white">{scorer.player_nome}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-300">{scorer.goals} gol(s)</p>
+              <p className="text-xs text-slate-700 dark:text-slate-700">{scorer.goals} gol(s)</p>
             </div>
             <span className="text-lg font-bold text-emerald-400">{scorer.goals}</span>
           </li>
         ))}
       </ul>
     ) : (
-      <p className="text-sm text-slate-500 dark:text-slate-300">Ainda nao ha gols registrados.</p>
+      <p className="text-sm text-slate-700 dark:text-slate-700">Ainda nao ha gols registrados.</p>
     )}
   </div>
 );
@@ -230,7 +230,7 @@ function DashboardBody({ auth }: { auth: AuthResponse }) {
       <div className="rounded-3xl border border-slate-200/10 bg-gradient-to-br from-emerald-500/15 via-emerald-500/5 to-transparent p-8 shadow-2xl shadow-emerald-900/20 dark:border-slate-800">
         <p className="text-xs uppercase tracking-[0.6em] text-emerald-300">{currentGroupName}</p>
         <h1 className="mt-4 text-3xl font-semibold text-slate-900 dark:text-white">Painel operacional do gestor</h1>
-        <p className="mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-300">
+        <p className="mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-700">
           Acompanhe produtividade, agendas e presencas em tempo real. Utilize os dados abaixo para direcionar comunicados e definir
           convocacoes equilibradas.
         </p>
@@ -257,7 +257,7 @@ function DashboardBody({ auth }: { auth: AuthResponse }) {
         </div>
       </div>
 
-      <footer className="rounded-3xl border border-slate-200/20 bg-white/5 px-6 py-4 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-300">
+      <footer className="rounded-3xl border border-slate-200/20 bg-white/5 px-6 py-4 text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-700">
         Centralize convocacoes, escala e desempenho em um unico painel: cadastre grupos, organize elencos e acompanhe indicadores sem sair do app.
       </footer>
     </div>
@@ -299,7 +299,7 @@ export default function Dashboard({ auth, onLogout }: DashboardProps) {
               <div>
                 <p className="text-xs uppercase tracking-[0.5em] text-emerald-400">Order Fut</p>
                 <p className="text-base font-semibold">{auth.user.nome}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{auth.user.email}</p>
+                <p className="text-xs text-slate-700 dark:text-slate-600">{auth.user.email}</p>
               </div>
               <div className="flex items-center gap-3">
                 <button
@@ -338,7 +338,7 @@ export default function Dashboard({ auth, onLogout }: DashboardProps) {
                   className={`rounded-2xl px-4 py-2 text-xs font-semibold transition ${
                     view === "overview"
                       ? "bg-emerald-500 text-emerald-950 shadow-lg shadow-emerald-500/30"
-                      : "border border-slate-700 text-slate-300"
+                      : "border border-slate-700 text-slate-700"
                   }`}
                 >
                   Visao geral
@@ -349,7 +349,7 @@ export default function Dashboard({ auth, onLogout }: DashboardProps) {
                   className={`rounded-2xl px-4 py-2 text-xs font-semibold transition ${
                     view === "groups"
                       ? "bg-emerald-500 text-emerald-950 shadow-lg shadow-emerald-500/30"
-                      : "border border-slate-700 text-slate-300"
+                      : "border border-slate-700 text-slate-700"
                   }`}
                 >
                   Grupos
@@ -360,7 +360,7 @@ export default function Dashboard({ auth, onLogout }: DashboardProps) {
                   className={`rounded-2xl px-4 py-2 text-xs font-semibold transition ${
                     view === "players"
                       ? "bg-emerald-500 text-emerald-950 shadow-lg shadow-emerald-500/30"
-                      : "border border-slate-700 text-slate-300"
+                      : "border border-slate-700 text-slate-700"
                   }`}
                 >
                   Jogadores
@@ -371,7 +371,7 @@ export default function Dashboard({ auth, onLogout }: DashboardProps) {
                   className={`rounded-2xl px-4 py-2 text-xs font-semibold transition ${
                     view === "organize"
                       ? "bg-emerald-500 text-emerald-950 shadow-lg shadow-emerald-500/30"
-                      : "border border-slate-700 text-slate-300"
+                      : "border border-slate-700 text-slate-700"
                   }`}
                 >
                   Organizacao
@@ -382,7 +382,7 @@ export default function Dashboard({ auth, onLogout }: DashboardProps) {
                   className={`rounded-2xl px-4 py-2 text-xs font-semibold transition ${
                     view === "stats"
                       ? "bg-emerald-500 text-emerald-950 shadow-lg shadow-emerald-500/30"
-                      : "border border-slate-700 text-slate-300"
+                      : "border border-slate-700 text-slate-700"
                   }`}
                 >
                   Estatisticas
@@ -393,7 +393,7 @@ export default function Dashboard({ auth, onLogout }: DashboardProps) {
                   className={`rounded-2xl px-4 py-2 text-xs font-semibold transition ${
                     view === "live"
                       ? "bg-emerald-500 text-emerald-950 shadow-lg shadow-emerald-500/30"
-                      : "border border-slate-700 text-slate-300"
+                      : "border border-slate-700 text-slate-700"
                   }`}
                 >
                   Partida ao vivo
@@ -404,7 +404,7 @@ export default function Dashboard({ auth, onLogout }: DashboardProps) {
                   className={`rounded-2xl px-4 py-2 text-xs font-semibold transition ${
                     view === "settings"
                       ? "bg-emerald-500 text-emerald-950 shadow-lg shadow-emerald-500/30"
-                      : "border border-slate-700 text-slate-300"
+                      : "border border-slate-700 text-slate-700"
                   }`}
                 >
                   Configuracoes

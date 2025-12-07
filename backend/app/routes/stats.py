@@ -19,12 +19,31 @@ router = APIRouter(prefix="/stats", tags=["stats"])
 
 def _extract_year(date_column):
     """Extract year from date column, compatible with both PostgreSQL and SQLite."""
-    return func.cast(func.strftime("%Y", date_column), Integer)
+    # Choose implementation based on DB dialect: SQLite uses strftime, Postgres uses extract
+    try:
+        from ..database import engine
+        dialect = engine.dialect.name
+    except Exception:
+        dialect = None
+
+    if dialect == "sqlite":
+        return func.cast(func.strftime("%Y", date_column), Integer)
+    # default to postgres-compatible extract
+    return func.cast(func.extract("year", date_column), Integer)
 
 
 def _truncate_to_month(date_column):
     """Truncate date to month start, compatible with both PostgreSQL and SQLite."""
-    return func.date(date_column, 'start of month')
+    try:
+        from ..database import engine
+        dialect = engine.dialect.name
+    except Exception:
+        dialect = None
+
+    if dialect == "sqlite":
+        return func.date(date_column, "start of month")
+    # Postgres
+    return func.date_trunc("month", date_column)
 
 
 def _get_group_for_user(db: Session, group_id: UUID, user_id: UUID) -> Group:
@@ -107,7 +126,7 @@ def group_stats(
     players_map = {player.id: player for player in players}
 
     year_rows = (
-        db.query(func.cast(func.strftime("%Y", Match.starts_at), Integer).label("year"))
+        db.query(_extract_year(Match.starts_at).label("year"))
         .filter(Match.group_id == group.id)
         .group_by("year")
         .order_by(desc("year"))

@@ -45,7 +45,7 @@ const InputField = ({ label, type = "text", value, onChange, placeholder, autoCo
 
   return (
     <label className="flex flex-col gap-2 text-sm text-slate-200">
-      <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">{label}</span>
+      <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-600">{label}</span>
       <div className="relative">
         <input
           className={`w-full rounded-xl border border-slate-700/70 bg-slate-900/80 px-4 py-3 text-base text-white outline-none transition focus:border-emerald-500 focus:bg-slate-900 ${
@@ -63,13 +63,13 @@ const InputField = ({ label, type = "text", value, onChange, placeholder, autoCo
             type="button"
             aria-label={revealed ? "Ocultar senha" : "Mostrar senha"}
             onClick={() => setRevealed((prev) => !prev)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-emerald-300"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 transition hover:text-emerald-300"
           >
             <EyeIcon isVisible={revealed} />
           </button>
         )}
       </div>
-      {helper && <span className="text-xs text-slate-400">{helper}</span>}
+      {helper && <span className="text-xs text-slate-600">{helper}</span>}
     </label>
   );
 };
@@ -330,7 +330,7 @@ function App() {
             <button className="rounded-xl bg-emerald-500 py-3 text-lg font-semibold text-emerald-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={isLoading}>
               {isLoading ? "Entrando..." : "Entrar"}
             </button>
-            <div className="flex flex-col gap-2 text-sm text-slate-300">
+            <div className="flex flex-col gap-2 text-sm text-slate-700">
               <span>
                 Nao possui conta? {secondaryAction("register", "Crie agora")}
               </span>
@@ -376,7 +376,7 @@ function App() {
             <button className="rounded-xl bg-emerald-500 py-3 text-lg font-semibold text-emerald-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={isLoading}>
               {isLoading ? "Criando conta..." : "Criar conta"}
             </button>
-            <p className="text-center text-sm text-slate-300">
+            <p className="text-center text-sm text-slate-700">
               Ja possui acesso? {secondaryAction("login", "Entrar")}
             </p>
           </form>
@@ -384,7 +384,7 @@ function App() {
       case "forgot":
         return (
           <form onSubmit={handleForgot} className="flex flex-col gap-4">
-            <p className="text-sm text-slate-300">
+            <p className="text-sm text-slate-700">
               Informe o email cadastrado e enviaremos o link de redefinicao. Caso nao encontre, verifique a pasta de spam.
             </p>
             <InputField
@@ -397,7 +397,7 @@ function App() {
             <button className="rounded-xl bg-emerald-500 py-3 text-lg font-semibold text-emerald-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={isLoading}>
               {isLoading ? "Enviando..." : "Enviar instrucoes"}
             </button>
-            <div className="flex flex-col gap-2 text-center text-sm text-slate-300">
+            <div className="flex flex-col gap-2 text-center text-sm text-slate-700">
               {secondaryAction("login", "Voltar para login")}
               <span>
                 Ja possui token? {secondaryAction("reset", "Redefinir agora")}
@@ -431,7 +431,7 @@ function App() {
             <button className="rounded-xl bg-emerald-500 py-3 text-lg font-semibold text-emerald-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={isLoading}>
               {isLoading ? "Atualizando..." : "Redefinir senha"}
             </button>
-            <p className="text-center text-sm text-slate-300">
+            <p className="text-center text-sm text-slate-700">
               Precisa solicitar outro link? {secondaryAction("forgot", "Receber novo email")}
             </p>
           </form>
@@ -447,7 +447,7 @@ function App() {
         <section className="flex-1 rounded-3xl border border-slate-800 bg-slate-900/60 p-10 shadow-2xl">
           <p className="text-sm uppercase tracking-[0.3em] text-emerald-400">Order Fut</p>
           <h1 className="mt-6 text-4xl font-semibold leading-tight text-white">Painel de comando para o gestor do clube.</h1>
-          <p className="mt-4 text-lg text-slate-300">
+          <p className="mt-4 text-lg text-slate-700">
             Centralize escalações, estatísticas individuais e presença nos treinos em um único ambiente seguro. Crie a conta
             do seu grupo para desbloquear dashboards de performance, registro financeiro e comunicação direta com a equipe.
             Utilize o formulário ao lado para liberar o acesso dos administradores e manter todo o clube sincronizado.
@@ -456,7 +456,7 @@ function App() {
 
         <section className="w-full max-w-md self-center rounded-3xl border border-slate-800 bg-slate-900/80 p-8 shadow-2xl">
           <header className="mb-6">
-            <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Area do usuario</p>
+            <p className="text-xs uppercase tracking-[0.4em] text-slate-600">Area do usuario</p>
             <h2 className="text-2xl font-semibold text-white">
               {view === "login" && "Entrar"}
               {view === "register" && "Criar conta"}

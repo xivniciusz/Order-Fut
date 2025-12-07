@@ -232,12 +232,12 @@ export default function Players({ token, initialGroupId, onBack }: PlayersProps)
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
           <div className="w-full max-w-md rounded-3xl border border-slate-800 bg-slate-950/90 p-6 text-slate-100">
             <h3 className="text-xl font-semibold">Excluir jogador</h3>
-            <p className="mt-3 text-sm text-slate-300">
+            <p className="mt-3 text-sm text-slate-700">
               Tem certeza que deseja excluir <span className="font-semibold text-white">{modal.player.nome}</span>? Esta acao nao pode ser desfeita.
             </p>
             {formError && <p className="mt-4 rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-2 text-sm text-rose-200">{formError}</p>}
             <div className="mt-6 flex justify-end gap-3">
-              <button type="button" onClick={closeModal} className="rounded-2xl border border-slate-700 px-4 py-2 text-sm text-slate-300">
+              <button type="button" onClick={closeModal} className="rounded-2xl border border-slate-700 px-4 py-2 text-sm text-slate-700">
                 Cancelar
               </button>
               <button
@@ -260,7 +260,7 @@ export default function Players({ token, initialGroupId, onBack }: PlayersProps)
           <h3 className="text-xl font-semibold">{modal.type === "edit" ? "Editar jogador" : "Adicionar jogador"}</h3>
           <form className="mt-4 space-y-4" onSubmit={(event) => event.preventDefault()}>
             <label className="flex flex-col gap-2 text-sm text-slate-200">
-              <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Nome completo</span>
+              <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-700">Nome completo</span>
               <input
                 className={inputBase}
                 value={formValues.nome}
@@ -271,7 +271,7 @@ export default function Players({ token, initialGroupId, onBack }: PlayersProps)
               />
             </label>
             <label className="flex flex-col gap-2 text-sm text-slate-200">
-              <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Posicao</span>
+              <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-700">Posicao</span>
               <select
                 className={inputBase}
                 value={formValues.posicao}
@@ -285,7 +285,7 @@ export default function Players({ token, initialGroupId, onBack }: PlayersProps)
               </select>
             </label>
             <label className="flex flex-col gap-2 text-sm text-slate-200">
-              <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Numero da camisa</span>
+              <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-700">Numero da camisa</span>
               <input
                 className={inputBase}
                 type="number"
@@ -300,7 +300,7 @@ export default function Players({ token, initialGroupId, onBack }: PlayersProps)
               />
             </label>
             <label className="flex flex-col gap-2 text-sm text-slate-200">
-              <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Grupo</span>
+              <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-700">Grupo</span>
               <select
                 className={inputBase}
                 value={formValues.group_id}
@@ -316,7 +316,7 @@ export default function Players({ token, initialGroupId, onBack }: PlayersProps)
             </label>
             {formError && <p className="rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-2 text-sm text-rose-200">{formError}</p>}
             <div className="flex justify-end gap-3 pt-2">
-              <button type="button" onClick={closeModal} className="rounded-2xl border border-slate-700 px-4 py-2 text-sm text-slate-300">
+              <button type="button" onClick={closeModal} className="rounded-2xl border border-slate-700 px-4 py-2 text-sm text-slate-700">
                 Cancelar
               </button>
               <button
@@ -338,11 +338,11 @@ export default function Players({ token, initialGroupId, onBack }: PlayersProps)
     <section className="space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <button type="button" onClick={onBack} className="text-xs uppercase tracking-[0.4em] text-slate-400 hover:text-emerald-400">
+          <button type="button" onClick={onBack} className="text-xs uppercase tracking-[0.4em] text-slate-600 hover:text-emerald-400">
             Voltar
           </button>
           <h2 className="mt-2 text-3xl font-semibold text-white">Jogadores do grupo</h2>
-          <p className="text-sm text-slate-400">Gerencie cadastros, filtre por posicoes e mantenha o elenco atualizado.</p>
+          <p className="text-sm text-slate-600">Gerencie cadastros, filtre por posicoes e mantenha o elenco atualizado.</p>
         </div>
         <button
           type="button"
@@ -356,7 +356,7 @@ export default function Players({ token, initialGroupId, onBack }: PlayersProps)
 
       <div className="grid gap-4 md:grid-cols-3">
         <div>
-          <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Grupo atual</label>
+          <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-600">Grupo atual</label>
           <select className={`${inputBase} mt-2`} value={currentGroupId ?? ""} onChange={handleGroupChange}>
             <option value="">Selecione o grupo</option>
             {groups.map((group) => (
@@ -367,7 +367,7 @@ export default function Players({ token, initialGroupId, onBack }: PlayersProps)
           </select>
         </div>
         <div>
-          <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Buscar</label>
+          <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-600">Buscar</label>
           <input
             className={`${inputBase} mt-2`}
             placeholder="Digite o nome do atleta"
@@ -376,7 +376,7 @@ export default function Players({ token, initialGroupId, onBack }: PlayersProps)
           />
         </div>
         <div>
-          <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Filtrar posicao</label>
+          <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-600">Filtrar posicao</label>
           <div className="mt-2 flex flex-wrap gap-2">
             {POSITION_FILTERS.map((option) => (
               <button
@@ -386,7 +386,7 @@ export default function Players({ token, initialGroupId, onBack }: PlayersProps)
                 className={`rounded-2xl px-3 py-2 text-xs font-semibold transition ${
                   positionFilter === option.value
                     ? "bg-emerald-500 text-emerald-950"
-                    : "border border-slate-700 text-slate-300 hover:border-emerald-400"
+                    : "border border-slate-700 text-slate-700 hover:border-emerald-400"
                 }`}
               >
                 {option.label}
@@ -397,7 +397,7 @@ export default function Players({ token, initialGroupId, onBack }: PlayersProps)
       </div>
 
       {!currentGroupId && (
-        <div className="rounded-3xl border border-dashed border-slate-700 px-6 py-10 text-center text-sm text-slate-400">
+        <div className="rounded-3xl border border-dashed border-slate-700 px-6 py-10 text-center text-sm text-slate-600">
           Escolha um grupo para visualizar os jogadores vinculados.
         </div>
       )}
@@ -405,10 +405,10 @@ export default function Players({ token, initialGroupId, onBack }: PlayersProps)
       {currentGroupId && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-slate-600">
               Grupo selecionado: <span className="font-semibold text-white">{currentGroupName}</span>
             </p>
-            <span className="text-xs text-slate-500">{filteredPlayers.length} jogador(es)</span>
+            <span className="text-xs text-slate-700">{filteredPlayers.length} jogador(es)</span>
           </div>
 
           {error && <p className="rounded-3xl border border-rose-500/40 bg-rose-500/10 px-4 py-2 text-sm text-rose-200">{error}</p>}
@@ -430,13 +430,13 @@ export default function Players({ token, initialGroupId, onBack }: PlayersProps)
                     <div className="flex-1">
                       <p className="text-lg font-semibold text-white">{player.nome}</p>
                       <p className="text-xs uppercase tracking-[0.3em] text-emerald-300">{positionLabel(player.posicao).toUpperCase()}</p>
-                      <p className="text-xs text-slate-400">Camisa {player.numero_camisa ?? "--"}</p>
+                      <p className="text-xs text-slate-600">Camisa {player.numero_camisa ?? "--"}</p>
                     </div>
                     <div className="flex flex-col gap-2 text-xs">
                       <button
                         type="button"
                         onClick={() => openEditModal(player)}
-                        className="rounded-2xl border border-slate-700 px-3 py-1 text-slate-300"
+                        className="rounded-2xl border border-slate-700 px-3 py-1 text-slate-700"
                       >
                         Editar
                       </button>
@@ -453,7 +453,7 @@ export default function Players({ token, initialGroupId, onBack }: PlayersProps)
               ))}
             </ul>
           ) : (
-            <div className="rounded-3xl border border-dashed border-slate-700 px-6 py-10 text-center text-sm text-slate-400">
+            <div className="rounded-3xl border border-dashed border-slate-700 px-6 py-10 text-center text-sm text-slate-600">
               Nenhum jogador encontrado para os filtros atuais.
             </div>
           )}

@@ -35,9 +35,9 @@ type RankingCardProps = {
 const RankingCard = ({ title, helper, entries, accent }: RankingCardProps) => (
   <div className="rounded-3xl border border-slate-800/60 bg-slate-950/40 p-5">
     <header className="mb-3">
-      <p className="text-[0.6rem] uppercase tracking-[0.4em] text-slate-500">Ranking</p>
+      <p className="text-[0.6rem] uppercase tracking-[0.4em] text-slate-700">Ranking</p>
       <h3 className="text-lg font-semibold text-white">{title}</h3>
-      <p className="text-xs text-slate-400">{helper}</p>
+      <p className="text-xs text-slate-600">{helper}</p>
     </header>
     {entries.length ? (
       <ul className="space-y-2 text-sm">
@@ -50,14 +50,14 @@ const RankingCard = ({ title, helper, entries, accent }: RankingCardProps) => (
               <p className="font-semibold text-white">
                 {index + 1}. {entry.player_nome}
               </p>
-              <p className="text-xs text-slate-500">Top {index + 1} da categoria</p>
+              <p className="text-xs text-slate-700">Top {index + 1} da categoria</p>
             </div>
             <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${chipColors[accent]}`}>{entry.value}</span>
           </li>
         ))}
       </ul>
     ) : (
-      <p className="text-xs text-slate-500">Sem registros para o filtro atual.</p>
+      <p className="text-xs text-slate-700">Sem registros para o filtro atual.</p>
     )}
   </div>
 );
@@ -67,14 +67,14 @@ const ChartCard = ({ points }: { points: ChartPoint[] }) => {
   return (
     <div className="rounded-3xl border border-slate-800/60 bg-slate-950/40 p-5">
       <header className="mb-4">
-        <p className="text-[0.6rem] uppercase tracking-[0.4em] text-slate-500">Grafico de tendencia</p>
+        <p className="text-[0.6rem] uppercase tracking-[0.4em] text-slate-700">Grafico de tendencia</p>
         <h3 className="text-lg font-semibold text-white">Producao mensal</h3>
-        <p className="text-xs text-slate-400">Comparacao visual entre partidas disputadas e gols marcados.</p>
+        <p className="text-xs text-slate-600">Comparacao visual entre partidas disputadas e gols marcados.</p>
       </header>
       {points.length ? (
         <div className="flex items-end gap-4 overflow-x-auto py-4">
           {points.map((point) => (
-            <div key={point.label} className="flex flex-1 min-w-[60px] flex-col items-center gap-2 text-xs text-slate-400">
+            <div key={point.label} className="flex flex-1 min-w-[60px] flex-col items-center gap-2 text-xs text-slate-600">
               <div className="flex h-32 w-full items-end justify-center gap-1">
                 <span
                   className="inline-flex w-3 rounded-full bg-indigo-500/40"
@@ -86,7 +86,7 @@ const ChartCard = ({ points }: { points: ChartPoint[] }) => {
                 />
               </div>
               <span className="font-semibold text-white">{point.label}</span>
-              <div className="text-[0.6rem] uppercase tracking-[0.3em] text-slate-500">
+              <div className="text-[0.6rem] uppercase tracking-[0.3em] text-slate-700">
                 <p>Jogos: {point.matches}</p>
                 <p>Gols: {point.goals}</p>
               </div>
@@ -94,7 +94,7 @@ const ChartCard = ({ points }: { points: ChartPoint[] }) => {
           ))}
         </div>
       ) : (
-        <p className="text-xs text-slate-500">Gere eventos para visualizar a curva de desempenho.</p>
+        <p className="text-xs text-slate-700">Gere eventos para visualizar a curva de desempenho.</p>
       )}
     </div>
   );
@@ -111,19 +111,19 @@ const SummaryCard = ({
 }) => (
   <div className="rounded-3xl border border-slate-800/60 bg-slate-950/40 p-5">
     <header className="mb-3">
-      <p className="text-[0.6rem] uppercase tracking-[0.4em] text-slate-500">Consolidado</p>
+      <p className="text-[0.6rem] uppercase tracking-[0.4em] text-slate-700">Consolidado</p>
       <h3 className="text-lg font-semibold text-white">{label}</h3>
-      <p className="text-xs text-slate-400">Total da filtragem atual vs historico completo.</p>
+      <p className="text-xs text-slate-600">Total da filtragem atual vs historico completo.</p>
     </header>
     <dl className="space-y-3 text-sm">
       {["goals", "assists", "matches", "cards"].map((field) => (
         <div key={field}>
-          <dt className="text-xs uppercase tracking-[0.3em] text-slate-500">
+          <dt className="text-xs uppercase tracking-[0.3em] text-slate-700">
             {field === "goals" ? "Gols" : field === "assists" ? "Assistencias" : field === "matches" ? "Jogos" : "Cartoes"}
           </dt>
           <dd className="mt-1 flex items-center gap-3">
             <span className="text-3xl font-semibold text-white">{period[field as keyof typeof period]}</span>
-            <div className="flex flex-1 items-center gap-2 text-xs text-slate-500">
+            <div className="flex flex-1 items-center gap-2 text-xs text-slate-700">
               <div className="h-1 flex-1 rounded-full bg-slate-800">
                 <div
                   className="h-1 rounded-full bg-emerald-500"
@@ -158,11 +158,11 @@ const PlayerDetail = ({
   <div className="rounded-3xl border border-slate-800/60 bg-slate-950/40 p-5">
     <header className="mb-3 flex items-center justify-between">
       <div>
-        <p className="text-[0.6rem] uppercase tracking-[0.4em] text-slate-500">Detalhes</p>
+        <p className="text-[0.6rem] uppercase tracking-[0.4em] text-slate-700">Detalhes</p>
         <h3 className="text-lg font-semibold text-white">Atleta selecionado</h3>
       </div>
       {data && (
-        <button type="button" onClick={onClose} className="text-xs text-slate-400 hover:text-white">
+        <button type="button" onClick={onClose} className="text-xs text-slate-600 hover:text-white">
           Limpar
         </button>
       )}
@@ -175,12 +175,12 @@ const PlayerDetail = ({
       <div className="space-y-4 text-sm">
         <div>
           <p className="text-2xl font-semibold text-white">{data.player.nome}</p>
-          <p className="text-xs text-slate-400">#{data.player.numero_camisa ?? "--"} · {data.player.posicao ?? "Sem posicao"}</p>
+          <p className="text-xs text-slate-600">#{data.player.numero_camisa ?? "--"} · {data.player.posicao ?? "Sem posicao"}</p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           {["goals", "assists", "matches", "cards"].map((field) => (
             <div key={field} className="rounded-2xl border border-slate-800/60 bg-black/20 px-4 py-3">
-              <p className="text-[0.6rem] uppercase tracking-[0.3em] text-slate-500">
+              <p className="text-[0.6rem] uppercase tracking-[0.3em] text-slate-700">
                 {field === "goals" ? "Gols" : field === "assists" ? "Assistencias" : field === "matches" ? "Jogos" : "Cartoes"}
               </p>
               <p className="text-2xl font-semibold text-white">{data.totals[field as keyof typeof data.totals]}</p>
@@ -188,16 +188,16 @@ const PlayerDetail = ({
           ))}
         </div>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Historico anual</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-700">Historico anual</p>
           {data.per_year.length ? (
             <ul className="mt-2 space-y-2">
               {data.per_year.map((yearItem: PlayerYearBreakdown) => (
                 <li key={yearItem.year} className="rounded-2xl border border-slate-800/60 bg-black/20 px-4 py-2">
-                  <div className="flex items-center justify-between text-xs text-slate-400">
+                  <div className="flex items-center justify-between text-xs text-slate-600">
                     <span>Ano {yearItem.year}</span>
                     <span>{yearItem.totals.matches} jogos</span>
                   </div>
-                  <div className="mt-2 flex gap-3 text-[0.75rem] text-slate-300">
+                  <div className="mt-2 flex gap-3 text-[0.75rem] text-slate-700">
                     <span>⚽ {yearItem.totals.goals}</span>
                     <span>🎯 {yearItem.totals.assists}</span>
                     <span>🧱 {yearItem.totals.cards}</span>
@@ -206,32 +206,32 @@ const PlayerDetail = ({
               ))}
             </ul>
           ) : (
-            <p className="text-xs text-slate-500">Sem distribuicao anual.</p>
+            <p className="text-xs text-slate-700">Sem distribuicao anual.</p>
           )}
         </div>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Ultimos jogos</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-700">Ultimos jogos</p>
           {data.recent_matches.length ? (
             <ul className="mt-2 space-y-2 text-xs">
               {data.recent_matches.map((match: PlayerMatchSnapshot) => (
-                <li key={match.match_id} className="rounded-2xl border border-slate-800/60 bg-black/20 px-4 py-2 text-slate-300">
+                <li key={match.match_id} className="rounded-2xl border border-slate-800/60 bg-black/20 px-4 py-2 text-slate-700">
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-white">{match.titulo}</span>
                     <span>{new Date(match.starts_at).toLocaleDateString("pt-BR")}</span>
                   </div>
-                  <p className="mt-1 text-[0.7rem] uppercase tracking-[0.3em] text-slate-500">
+                  <p className="mt-1 text-[0.7rem] uppercase tracking-[0.3em] text-slate-700">
                     Gols {match.goals} · Assist {match.assists} · Cartoes {match.cards}
                   </p>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-xs text-slate-500">Participacao recente nao encontrada.</p>
+            <p className="text-xs text-slate-700">Participacao recente nao encontrada.</p>
           )}
         </div>
       </div>
     ) : (
-      <p className="text-sm text-slate-500">Selecione um atleta na tabela para ver os detalhes.</p>
+      <p className="text-sm text-slate-700">Selecione um atleta na tabela para ver os detalhes.</p>
     )}
   </div>
 );
@@ -371,7 +371,7 @@ export default function Stats({ token }: StatsProps) {
   if (!selectedGroupId) {
     return (
       <section className="space-y-4">
-        <div className="rounded-3xl border border-slate-800/60 bg-slate-950/40 p-6 text-center text-sm text-slate-400">
+        <div className="rounded-3xl border border-slate-800/60 bg-slate-950/40 p-6 text-center text-sm text-slate-600">
           Escolha um grupo na barra lateral para visualizar as estatisticas consolidadas.
         </div>
       </section>
@@ -386,12 +386,12 @@ export default function Stats({ token }: StatsProps) {
         <div>
           <p className="text-[0.6rem] uppercase tracking-[0.6em] text-emerald-300">{currentGroupName || "Estatisticas"}</p>
           <h2 className="mt-2 text-3xl font-semibold text-white">Central de desempenho</h2>
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-slate-700">
             Compare goleadores, criadores e minutos em campo. Ajuste o periodo para acompanhar evolucao anual ou geral.
           </p>
         </div>
         <div className="flex flex-wrap gap-3 text-sm">
-          <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+          <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-600">
             Selecione o ano
             <select
               className="mt-2 w-full rounded-2xl border border-slate-800/60 bg-slate-950/70 px-4 py-2 text-sm text-white"
@@ -406,8 +406,8 @@ export default function Stats({ token }: StatsProps) {
               ))}
             </select>
           </label>
-          <div className="rounded-2xl border border-slate-800/60 bg-black/30 px-4 py-3 text-xs text-slate-400">
-            <p className="uppercase tracking-[0.3em] text-slate-500">Ultima geracao</p>
+          <div className="rounded-2xl border border-slate-800/60 bg-black/30 px-4 py-3 text-xs text-slate-600">
+            <p className="uppercase tracking-[0.3em] text-slate-700">Ultima geracao</p>
             <p className="mt-1 text-sm text-white">{formatGeneratedAt(groupStats?.generated_at)}</p>
           </div>
         </div>
@@ -438,19 +438,19 @@ export default function Stats({ token }: StatsProps) {
 
           <div className="grid gap-4 xl:grid-cols-3">
             <div className="xl:col-span-2">
-              <div className="rounded-3xl border border-slate-800/60 bg-slate-950/40 p-5">
+                  <div className="rounded-3xl border border-slate-800/60 bg-slate-950/40 p-5">
                 <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="text-[0.6rem] uppercase tracking-[0.4em] text-slate-500">Elenco consolidado</p>
+                    <p className="text-[0.6rem] uppercase tracking-[0.4em] text-slate-700">Elenco consolidado</p>
                     <h3 className="text-lg font-semibold text-white">Tabela de atletas</h3>
-                    <p className="text-xs text-slate-400">Clique para abrir o painel detalhado.</p>
+                    <p className="text-xs text-slate-600">Clique para abrir o painel detalhado.</p>
                   </div>
                   <span className="rounded-full border border-emerald-500/40 px-3 py-1 text-xs text-emerald-200">{groupStats.players.length} atletas</span>
                 </header>
                 <div className="overflow-x-auto">
-                  <table className="min-w-full text-left text-sm text-slate-300">
+                  <table className="min-w-full text-left text-sm text-slate-700">
                     <thead>
-                      <tr className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                      <tr className="text-xs uppercase tracking-[0.3em] text-slate-700">
                         <th className="px-4 py-2">Jogador</th>
                         <th className="px-4 py-2">Gols ({periodLabel})</th>
                         <th className="px-4 py-2">Assist</th>
@@ -473,7 +473,7 @@ export default function Stats({ token }: StatsProps) {
                           >
                             <td className="px-4 py-3">
                               <p className="font-semibold text-white">{player.nome}</p>
-                              <p className="text-[0.65rem] text-slate-500">#{player.numero_camisa ?? "--"} · {player.posicao ?? ""}</p>
+                              <p className="text-[0.65rem] text-slate-700">#{player.numero_camisa ?? "--"} · {player.posicao ?? ""}</p>
                             </td>
                             <td className="px-4 py-3 font-semibold text-white">{player.period.goals}</td>
                             <td className="px-4 py-3">{player.period.assists}</td>
@@ -493,7 +493,7 @@ export default function Stats({ token }: StatsProps) {
           </div>
         </>
       ) : (
-        <p className="text-sm text-slate-500">Nenhum dado encontrado para o grupo selecionado.</p>
+        <p className="text-sm text-slate-700">Nenhum dado encontrado para o grupo selecionado.</p>
       )}
     </section>
   );

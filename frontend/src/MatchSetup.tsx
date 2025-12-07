@@ -231,7 +231,7 @@ export default function MatchSetup({ token }: MatchSetupProps) {
         <header className="mb-4">
           <p className="text-xs uppercase tracking-[0.4em] text-emerald-400">Distribuicao</p>
           <h3 className="text-xl font-semibold text-white">Times gerados</h3>
-          <p className="text-sm text-slate-400">Baseados na ordem de chegada e preferencia de goleiros.</p>
+          <p className="text-sm text-slate-600">Baseados na ordem de chegada e preferencia de goleiros.</p>
         </header>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {generatedResult.teams.map((team) => (
@@ -270,9 +270,9 @@ export default function MatchSetup({ token }: MatchSetupProps) {
         <div>
           <p className="text-xs uppercase tracking-[0.4em] text-emerald-400">Organizacao</p>
           <h2 className="text-3xl font-semibold text-white">Organizar partida</h2>
-          <p className="text-sm text-slate-400">Marque presencas, defina goleiros e gere os times obedecendo a ordem de chegada.</p>
+          <p className="text-sm text-slate-600">Marque presencas, defina goleiros e gere os times obedecendo a ordem de chegada.</p>
         </div>
-        <div className="text-right text-sm text-slate-400">
+        <div className="text-right text-sm text-slate-600">
           <p>
             Linhas presentes: <span className="font-semibold text-white">{presentLineCount}</span>
           </p>
@@ -301,7 +301,7 @@ export default function MatchSetup({ token }: MatchSetupProps) {
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className={sectionCard}>
-          <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Grupo</p>
+          <p className="text-xs uppercase tracking-[0.4em] text-slate-600">Grupo</p>
           <select className={`${inputBase} mt-3`} value={currentGroupId ?? ""} onChange={handleGroupChange}>
             <option value="">Selecione o grupo</option>
             {groups.map((group) => (
@@ -311,7 +311,7 @@ export default function MatchSetup({ token }: MatchSetupProps) {
             ))}
           </select>
           <div className="mt-4 grid gap-3">
-            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-600">
               Titulo
               <input
                 className={`${inputBase} mt-2`}
@@ -321,7 +321,7 @@ export default function MatchSetup({ token }: MatchSetupProps) {
                 maxLength={160}
               />
             </label>
-            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-600">
               Data e hora
               <input
                 type="datetime-local"
@@ -331,7 +331,7 @@ export default function MatchSetup({ token }: MatchSetupProps) {
               />
             </label>
             <div className="grid gap-3 md:grid-cols-2">
-              <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+              <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-600">
                 Tamanho dos times
                 <select
                   className={`${inputBase} mt-2`}
@@ -345,14 +345,14 @@ export default function MatchSetup({ token }: MatchSetupProps) {
                   ))}
                 </select>
               </label>
-              <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+              <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-600">
                 Goleiros fixos?
                 <button
                   type="button"
                   className={`mt-2 flex w-full items-center justify-between rounded-2xl border px-4 py-2 text-sm transition ${
                     matchForm.goalkeepersFixed
                       ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
-                      : "border-slate-700 text-slate-300"
+                      : "border-slate-700 text-slate-700"
                   }`}
                   onClick={() => setMatchForm((prev) => ({ ...prev, goalkeepersFixed: !prev.goalkeepersFixed }))}
                 >
@@ -379,7 +379,7 @@ export default function MatchSetup({ token }: MatchSetupProps) {
         </div>
 
         <div className={sectionCard}>
-          <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Acoes</p>
+          <p className="text-xs uppercase tracking-[0.4em] text-slate-600">Acoes</p>
           <div className="mt-4 flex flex-col gap-3">
             <button
               type="button"
@@ -397,7 +397,7 @@ export default function MatchSetup({ token }: MatchSetupProps) {
             >
               Gerar times automaticamente
             </button>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-600">
               Arraste ou reordene os jogadores de linha e use a lista dedicada para definir quem assume o gol em cada rodada.
             </p>
           </div>
@@ -407,20 +407,20 @@ export default function MatchSetup({ token }: MatchSetupProps) {
       <section className={sectionCard}>
         <header className="mb-4 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Lista de jogadores</p>
+            <p className="text-xs uppercase tracking-[0.4em] text-slate-600">Lista de jogadores</p>
             <h3 className="text-xl font-semibold text-white">Controle de presenca</h3>
           </div>
           <div className="flex gap-2 text-xs">
             <button
               type="button"
-              className="rounded-2xl border border-slate-700 px-4 py-2 text-slate-300"
+              className="rounded-2xl border border-slate-700 px-4 py-2 text-slate-700"
               onClick={() => setPlayers((prev) => prev.map((player) => ({ ...player, isPresent: true })))}
             >
               Marcar todos
             </button>
             <button
               type="button"
-              className="rounded-2xl border border-slate-700 px-4 py-2 text-slate-300"
+              className="rounded-2xl border border-slate-700 px-4 py-2 text-slate-700"
               onClick={() => setPlayers((prev) => prev.map((player) => ({ ...player, isPresent: false })))}
             >
               Limpar
@@ -436,7 +436,7 @@ export default function MatchSetup({ token }: MatchSetupProps) {
         ) : players.length ? (
           <div className="space-y-6">
             <div>
-              <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Jogadores de linha</p>
+              <p className="text-xs uppercase tracking-[0.4em] text-slate-600">Jogadores de linha</p>
               {linePlayers.length ? (
                 <ul className="mt-3 space-y-3">
                   {linePlayers.map((player) => {
@@ -456,7 +456,7 @@ export default function MatchSetup({ token }: MatchSetupProps) {
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <span className="cursor-move text-xs uppercase tracking-[0.4em] text-slate-500">⋮⋮</span>
+                          <span className="cursor-move text-xs uppercase tracking-[0.4em] text-slate-700">⋮⋮</span>
                           <input
                             type="checkbox"
                             checked={player.isPresent}
@@ -468,7 +468,7 @@ export default function MatchSetup({ token }: MatchSetupProps) {
                         </div>
                         <div className="flex-1">
                           <p className="font-semibold text-white">{player.nome}</p>
-                          <label className="mt-1 flex items-center gap-2 text-xs text-slate-400">
+                          <label className="mt-1 flex items-center gap-2 text-xs text-slate-600">
                             Ordem
                             <select
                               className="rounded-xl border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-white"
@@ -494,7 +494,7 @@ export default function MatchSetup({ token }: MatchSetupProps) {
                           onClick={() =>
                             updatePlayer(player.id, (current) => ({ ...current, isGoalkeeper: !current.isGoalkeeper }))
                           }
-                          className="rounded-2xl border border-slate-600 px-3 py-1 text-xs font-semibold text-slate-300"
+                          className="rounded-2xl border border-slate-600 px-3 py-1 text-xs font-semibold text-slate-700"
                         >
                           Marcar GK
                         </button>
@@ -503,12 +503,12 @@ export default function MatchSetup({ token }: MatchSetupProps) {
                   })}
                 </ul>
               ) : (
-                <p className="mt-3 text-sm text-slate-500">Nenhum jogador de linha disponível.</p>
+                <p className="mt-3 text-sm text-slate-700">Nenhum jogador de linha disponível.</p>
               )}
             </div>
 
             <div className="border-t border-slate-800 pt-4">
-              <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Goleiros</p>
+              <p className="text-xs uppercase tracking-[0.4em] text-slate-600">Goleiros</p>
               {goalkeeperPlayers.length ? (
                 <ul className="mt-3 space-y-3">
                   {goalkeeperPlayers.map((player) => (
@@ -530,14 +530,14 @@ export default function MatchSetup({ token }: MatchSetupProps) {
                       </div>
                       <div className="flex-1">
                         <p className="font-semibold text-white">{player.nome}</p>
-                        <p className="text-xs text-slate-400">Goleiro dedicado</p>
+                        <p className="text-xs text-slate-600">Goleiro dedicado</p>
                       </div>
                       <button
                         type="button"
                         onClick={() =>
                           updatePlayer(player.id, (current) => ({ ...current, isGoalkeeper: !current.isGoalkeeper }))
                         }
-                        className="rounded-2xl border border-slate-600 px-3 py-1 text-xs font-semibold text-slate-300"
+                        className="rounded-2xl border border-slate-600 px-3 py-1 text-xs font-semibold text-slate-700"
                       >
                         Remover GK
                       </button>
@@ -545,14 +545,14 @@ export default function MatchSetup({ token }: MatchSetupProps) {
                   ))}
                 </ul>
               ) : (
-                <p className="mt-3 text-sm text-slate-500">
+                <p className="mt-3 text-sm text-slate-700">
                   Nao ha goleiros marcados. Utilize o botao "Marcar GK" nos jogadores de linha para trazer para esta lista.
                 </p>
               )}
             </div>
           </div>
         ) : (
-          <div className="rounded-2xl border border-dashed border-slate-700 px-6 py-10 text-center text-sm text-slate-400">
+          <div className="rounded-2xl border border-dashed border-slate-700 px-6 py-10 text-center text-sm text-slate-600">
             Nenhum jogador carregado. Certifique-se de selecionar um grupo com atletas cadastrados.
           </div>
         )}

@@ -410,7 +410,7 @@ export default function MatchLive({ token }: MatchLiveProps) {
       <header>
         <p className="text-xs uppercase tracking-[0.4em] text-emerald-400">Partida ao vivo</p>
         <h2 className="text-3xl font-semibold text-white">Controle em tempo real</h2>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-slate-600">
           Monitore escala, fila de entrada e eventos enquanto o jogo acontece. Registre gols, cartoes e substituicoes com um toque e mantenha
           a fila organizada.
         </p>
@@ -421,11 +421,11 @@ export default function MatchLive({ token }: MatchLiveProps) {
       <div className="grid gap-4 xl:grid-cols-2">
         <div className={sectionCard}>
           <header className="mb-4">
-            <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Selecionar partida</p>
+            <p className="text-xs uppercase tracking-[0.4em] text-slate-600">Selecionar partida</p>
             <h3 className="text-lg font-semibold text-white">Escolha pelo ID ou agenda</h3>
           </header>
           <div className="space-y-3">
-            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-700">
               Escolha rapida
               <select
                 className="mt-2 w-full rounded-2xl border border-slate-800/50 bg-slate-950/40 px-4 py-3 text-sm text-white"
@@ -440,7 +440,7 @@ export default function MatchLive({ token }: MatchLiveProps) {
                 ))}
               </select>
             </label>
-            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-700">
               Ou informe manualmente
               <input
                 className="mt-2 w-full rounded-2xl border border-slate-800/50 bg-slate-950/40 px-4 py-3 text-sm text-white placeholder-slate-500"
@@ -493,14 +493,14 @@ export default function MatchLive({ token }: MatchLiveProps) {
 
         <div className={`${sectionCard} space-y-4`}>
           <header>
-            <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Tempo e placar</p>
+            <p className="text-xs uppercase tracking-[0.4em] text-slate-600">Tempo e placar</p>
             <h3 className="text-lg font-semibold text-white">Controle do jogo</h3>
           </header>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded-2xl border border-slate-800/50 bg-slate-950/40 p-4 text-center">
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
                 <p className="uppercase tracking-[0.3em]">Cronometro regressivo</p>
-                <span className="text-[0.65rem] text-slate-500">Tempo baseado na configuracao abaixo</span>
+                <span className="text-[0.65rem] text-slate-700">Tempo baseado na configuracao abaixo</span>
               </div>
               <p className="mt-3 text-4xl font-semibold text-white">{formatClock(clockSeconds)}</p>
               <div className="mt-4 flex flex-wrap justify-center gap-2 text-xs">
@@ -521,10 +521,10 @@ export default function MatchLive({ token }: MatchLiveProps) {
                   Reiniciar
                 </button>
               </div>
-              <div className="mt-4 space-y-2 text-left text-xs text-slate-400">
+              <div className="mt-4 space-y-2 text-left text-xs text-slate-600">
                 <div className="grid gap-2 sm:grid-cols-2">
                   <label className="space-y-1">
-                    <span className="block text-[0.6rem] uppercase tracking-[0.3em] text-slate-500">Duracao (min)</span>
+                    <span className="block text-[0.6rem] uppercase tracking-[0.3em] text-slate-700">Duracao (min)</span>
                     <input
                       type="number"
                       min={1}
@@ -535,7 +535,7 @@ export default function MatchLive({ token }: MatchLiveProps) {
                     />
                   </label>
                   <label className="space-y-1">
-                    <span className="block text-[0.6rem] uppercase tracking-[0.3em] text-slate-500">Aviso final (s)</span>
+                    <span className="block text-[0.6rem] uppercase tracking-[0.3em] text-slate-700">Aviso final (s)</span>
                     <input
                       type="number"
                       min={0}
@@ -552,9 +552,9 @@ export default function MatchLive({ token }: MatchLiveProps) {
                 >
                   Aplicar configuracao
                 </button>
-                <p className="text-[0.65rem] text-slate-500">Alertas soam no aviso configurado e quando o tempo zera.</p>
+                <p className="text-[0.65rem] text-slate-700">Alertas soam no aviso configurado e quando o tempo zera.</p>
               </div>
-              <label className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-400">
+              <label className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-600">
                 <input
                   type="checkbox"
                   className="h-4 w-4 rounded border border-slate-700 bg-slate-950"
@@ -565,7 +565,7 @@ export default function MatchLive({ token }: MatchLiveProps) {
               </label>
             </div>
             <div className="rounded-2xl border border-slate-800/50 bg-slate-950/40 p-4 text-center">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Placar</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-600">Placar</p>
               {orderedTeams.length ? (
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   {orderedTeams.map(([teamKey]) => {
@@ -584,10 +584,10 @@ export default function MatchLive({ token }: MatchLiveProps) {
                         }`}
                       >
                         <div className="flex items-center justify-between">
-                          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Time {teamKey}</p>
+                          <p className="text-xs uppercase tracking-[0.3em] text-slate-700">Time {teamKey}</p>
                           {isActive && <span className="text-[0.65rem] uppercase tracking-[0.3em] text-emerald-400">Em quadra</span>}
                           {!isActive && queueIndex >= 0 && (
-                            <span className="text-[0.65rem] text-slate-500">Fila #{queueIndex + 1}</span>
+                            <span className="text-[0.65rem] text-slate-700">Fila #{queueIndex + 1}</span>
                           )}
                         </div>
                         <p className="mt-1 text-3xl font-semibold text-white">{scoreboard[teamKey] ?? 0}</p>
@@ -596,9 +596,9 @@ export default function MatchLive({ token }: MatchLiveProps) {
                   })}
                 </div>
               ) : (
-                <p className="mt-3 text-xs text-slate-500">Nenhuma equipe escalada.</p>
+                <p className="mt-3 text-xs text-slate-700">Nenhuma equipe escalada.</p>
               )}
-              <p className="mt-3 text-xs text-slate-500">Gols somados pelos eventos registrados.</p>
+              <p className="mt-3 text-xs text-slate-700">Gols somados pelos eventos registrados.</p>
             </div>
           </div>
           <div className="flex flex-wrap gap-3 text-xs">
@@ -631,7 +631,7 @@ export default function MatchLive({ token }: MatchLiveProps) {
       <div className="grid gap-4 lg:grid-cols-2">
         <div className={`${sectionCard} space-y-4`}>
           <header>
-            <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Times em quadra</p>
+            <p className="text-xs uppercase tracking-[0.4em] text-slate-600">Times em quadra</p>
             <h3 className="text-lg font-semibold text-white">Escalacao atual</h3>
           </header>
           {detailLoaded ? (
@@ -649,23 +649,23 @@ export default function MatchLive({ token }: MatchLiveProps) {
                           </li>
                         ))
                       ) : (
-                        <li className="rounded-2xl border border-dashed border-slate-700 px-3 py-2 text-xs text-slate-500">Sem jogadores atribuídos.</li>
+                        <li className="rounded-2xl border border-dashed border-slate-700 px-3 py-2 text-xs text-slate-700">Sem jogadores atribuídos.</li>
                       )}
                     </ul>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-slate-500">Gere os times e comece a contagem regressiva para liberar a escala.</p>
+              <p className="text-sm text-slate-700">Gere os times e comece a contagem regressiva para liberar a escala.</p>
             )
           ) : (
-            <p className="text-sm text-slate-500">Carregue uma partida para visualizar as equipes.</p>
+            <p className="text-sm text-slate-700">Carregue uma partida para visualizar as equipes.</p>
           )}
         </div>
 
         <div className={`${sectionCard} space-y-4`}>
           <header>
-            <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Fila e banco</p>
+            <p className="text-xs uppercase tracking-[0.4em] text-slate-600">Fila e banco</p>
             <h3 className="text-lg font-semibold text-white">Quem aguarda entrar</h3>
           </header>
           {detailLoaded ? (
@@ -675,7 +675,7 @@ export default function MatchLive({ token }: MatchLiveProps) {
                   <div className="space-y-3">
                     {waitingTeams.map(([teamKey, players], index) => (
                       <div key={teamKey} className="rounded-2xl border border-slate-800/70 bg-black/15 p-4">
-                        <div className="flex items-center justify-between text-xs text-slate-400">
+                        <div className="flex items-center justify-between text-xs text-slate-600">
                           <p className="uppercase tracking-[0.3em]">Time {teamKey}</p>
                           <span>#{index + 1} na fila</span>
                         </div>
@@ -684,27 +684,27 @@ export default function MatchLive({ token }: MatchLiveProps) {
                             players.map((player) => (
                               <li key={player.match_player_id} className="rounded-2xl border border-slate-800/70 bg-slate-950/40 px-3 py-2 text-slate-200">
                                 <span className="font-semibold">{player.nome}</span>
-                                {player.has_played && <span className="ml-2 text-xs text-slate-400">Ja jogou</span>}
+                                {player.has_played && <span className="ml-2 text-xs text-slate-600">Ja jogou</span>}
                               </li>
                             ))
                           ) : (
-                            <li className="rounded-2xl border border-dashed border-slate-700 px-3 py-2 text-xs text-slate-500">Sem jogadores atribuídos.</li>
+                            <li className="rounded-2xl border border-dashed border-slate-700 px-3 py-2 text-xs text-slate-700">Sem jogadores atribuídos.</li>
                           )}
                         </ul>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-500">Nenhum time aguarda para entrar.</p>
+                  <p className="text-sm text-slate-700">Nenhum time aguarda para entrar.</p>
                 )}
                 {looseBenchPlayers.length ? (
                   <div className="rounded-2xl border border-dashed border-slate-700 p-4">
-                    <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Jogadores sem time definido</p>
+                    <p className="text-xs uppercase tracking-[0.3em] text-slate-700">Jogadores sem time definido</p>
                     <ul className="mt-3 space-y-2">
                       {looseBenchPlayers.map((player) => (
                         <li key={player.match_player_id} className="rounded-2xl border border-slate-800/70 bg-slate-950/40 px-3 py-2 text-slate-200">
                           <span className="font-semibold">{player.nome}</span>
-                          <span className="ml-2 text-xs text-slate-400">Fila #{player.order_position + 1}</span>
+                          <span className="ml-2 text-xs text-slate-600">Fila #{player.order_position + 1}</span>
                         </li>
                       ))}
                     </ul>
@@ -712,10 +712,10 @@ export default function MatchLive({ token }: MatchLiveProps) {
                 ) : null}
               </div>
             ) : (
-              <p className="text-sm text-slate-500">Sem filas: todos os presentes estao em quadra.</p>
+              <p className="text-sm text-slate-700">Sem filas: todos os presentes estao em quadra.</p>
             )
           ) : (
-            <p className="text-sm text-slate-500">Carregue uma partida para ver a fila.</p>
+            <p className="text-sm text-slate-700">Carregue uma partida para ver a fila.</p>
           )}
         </div>
       </div>
@@ -723,10 +723,10 @@ export default function MatchLive({ token }: MatchLiveProps) {
       <div className="grid gap-4 xl:grid-cols-2">
         <form className={`${sectionCard} space-y-4`} onSubmit={handleEventSubmit}>
           <header>
-            <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Registrar evento</p>
+            <p className="text-xs uppercase tracking-[0.4em] text-slate-600">Registrar evento</p>
             <h3 className="text-lg font-semibold text-white">Atualize a parcial</h3>
           </header>
-          <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-700">
             Tipo de evento
             <select
               className="mt-2 w-full rounded-2xl border border-slate-800/50 bg-slate-950/40 px-4 py-3 text-sm text-white"
@@ -743,7 +743,7 @@ export default function MatchLive({ token }: MatchLiveProps) {
               ))}
             </select>
           </label>
-          <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-700">
             Jogador principal
             <select
               className="mt-2 w-full rounded-2xl border border-slate-800/50 bg-slate-950/40 px-4 py-3 text-sm text-white"
@@ -760,7 +760,7 @@ export default function MatchLive({ token }: MatchLiveProps) {
             </select>
           </label>
           {EVENT_NEEDS_ASSIST[eventForm.tipo] && (
-            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+            <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-700">
               Assistencia (opcional)
               <select
                 className="mt-2 w-full rounded-2xl border border-slate-800/50 bg-slate-950/40 px-4 py-3 text-sm text-white"
@@ -777,7 +777,7 @@ export default function MatchLive({ token }: MatchLiveProps) {
               </select>
             </label>
           )}
-          <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+          <label className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-700">
             Observacoes
             <textarea
               className="mt-2 w-full rounded-2xl border border-slate-800/50 bg-slate-950/40 px-4 py-3 text-sm text-white placeholder-slate-500"
@@ -800,7 +800,7 @@ export default function MatchLive({ token }: MatchLiveProps) {
 
         <div className={`${sectionCard} space-y-4`}>
           <header>
-            <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Eventos</p>
+            <p className="text-xs uppercase tracking-[0.4em] text-slate-600">Eventos</p>
             <h3 className="text-lg font-semibold text-white">Linha do tempo</h3>
           </header>
           {detailLoaded && matchDetail?.events?.length ? (
@@ -811,20 +811,20 @@ export default function MatchLive({ token }: MatchLiveProps) {
                     <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${chipColors[event.tipo]}`}>
                       {EVENT_LABELS[event.tipo]}
                     </span>
-                    <span className="text-xs text-slate-500">{formatDateTime(event.created_at)}</span>
+                    <span className="text-xs text-slate-700">{formatDateTime(event.created_at)}</span>
                   </div>
                   <p className="mt-2 font-semibold text-white">
                     {event.player_nome ?? "Evento geral"}
                     {event.assist_player_nome && (
-                      <span className="text-xs text-slate-400"> · Assist: {event.assist_player_nome}</span>
+                      <span className="text-xs text-slate-600"> · Assist: {event.assist_player_nome}</span>
                     )}
                   </p>
-                  {event.description && <p className="text-xs text-slate-400">{event.description}</p>}
+                  {event.description && <p className="text-xs text-slate-600">{event.description}</p>}
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-slate-500">Nenhum evento registrado ainda.</p>
+            <p className="text-sm text-slate-700">Nenhum evento registrado ainda.</p>
           )}
         </div>
       </div>

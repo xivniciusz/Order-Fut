@@ -182,7 +182,7 @@ export default function Settings({ token, authUser, onLogout }: SettingsProps) {
           <header className="mb-4">
             <p className="text-[0.6rem] uppercase tracking-[0.4em] text-emerald-400">Interface</p>
             <h3 className="text-xl font-semibold">Aparencia e tema</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-300">Defina o modo principal exibido em todos os dispositivos sincronizados.</p>
+            <p className="text-sm text-slate-700 dark:text-slate-700">Defina o modo principal exibido em todos os dispositivos sincronizados.</p>
           </header>
           <div className="grid gap-3">
             {themeOptions.map((option) => (
@@ -199,13 +199,13 @@ export default function Settings({ token, authUser, onLogout }: SettingsProps) {
               >
                 <div>
                   <p className="text-sm font-semibold">{option.label}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{option.helper}</p>
+                  <p className="text-xs text-slate-700 dark:text-slate-600">{option.helper}</p>
                 </div>
                 {preferences.theme === option.value && <span className="text-xs font-semibold uppercase">Ativo</span>}
               </button>
             ))}
           </div>
-          <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-4 text-xs text-slate-700 dark:text-slate-600">
             Tema atual resolvido: <span className="font-semibold text-slate-900 dark:text-white">{resolvedTheme === "dark" ? "Escuro" : "Claro"}</span>
           </p>
         </section>
@@ -214,7 +214,7 @@ export default function Settings({ token, authUser, onLogout }: SettingsProps) {
           <header className="mb-4 text-slate-900 dark:text-white">
             <p className="text-[0.6rem] uppercase tracking-[0.4em] text-emerald-400">Alertas</p>
             <h3 className="text-xl font-semibold">Notificacoes</h3>
-            <p className="text-sm text-slate-600 dark:text-slate-300">Customize canais de comunicacao utilizados pelo Order Fut.</p>
+            <p className="text-sm text-slate-600 dark:text-slate-700">Customize canais de comunicacao utilizados pelo Order Fut.</p>
           </header>
           <div className="space-y-4 text-sm text-slate-700 dark:text-slate-200">
             <label className="flex items-start gap-3 rounded-2xl border border-slate-200/40 bg-white/70 px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
@@ -227,7 +227,7 @@ export default function Settings({ token, authUser, onLogout }: SettingsProps) {
               />
               <div>
                 <p className="font-semibold">Email operacional</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Resumo de grupos, confirmacoes e alertas pontuais.</p>
+                <p className="text-xs text-slate-700 dark:text-slate-600">Resumo de grupos, confirmacoes e alertas pontuais.</p>
               </div>
             </label>
             <label className="flex items-start gap-3 rounded-2xl border border-slate-200/40 bg-white/70 px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
@@ -240,7 +240,7 @@ export default function Settings({ token, authUser, onLogout }: SettingsProps) {
               />
               <div>
                 <p className="font-semibold">Push no navegador</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Ideais para avisos imediatos em matchdays.</p>
+                <p className="text-xs text-slate-700 dark:text-slate-600">Ideais para avisos imediatos em matchdays.</p>
               </div>
             </label>
             <label className="flex items-start gap-3 rounded-2xl border border-slate-200/40 bg-white/70 px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
@@ -253,7 +253,7 @@ export default function Settings({ token, authUser, onLogout }: SettingsProps) {
               />
               <div>
                 <p className="font-semibold">Rodizio automatico de goleiros</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Mantem alternancia sugerida nas fichas de jogo geradas.</p>
+                <p className="text-xs text-slate-700 dark:text-slate-600">Mantem alternancia sugerida nas fichas de jogo geradas.</p>
               </div>
             </label>
           </div>
@@ -264,7 +264,7 @@ export default function Settings({ token, authUser, onLogout }: SettingsProps) {
         <header className="mb-4 text-slate-900 dark:text-white">
           <p className="text-[0.6rem] uppercase tracking-[0.4em] text-rose-400">Seguranca</p>
           <h3 className="text-xl font-semibold">Sessao e autenticacao</h3>
-          <p className="text-sm text-slate-600 dark:text-slate-300">
+          <p className="text-sm text-slate-600 dark:text-slate-700">
             Encerre o acesso atual ou desconecte dispositivos que nao utilizam mais o painel.
           </p>
         </header>

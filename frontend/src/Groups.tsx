@@ -32,7 +32,7 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
       <div className="w-full max-w-lg rounded-3xl border border-slate-800 bg-slate-950/90 p-6 text-slate-100 shadow-2xl">
         <header className="mb-4 flex items-center justify-between">
           <h3 className="text-xl font-semibold">{title}</h3>
-          <button type="button" onClick={onClose} className="text-sm text-slate-400 hover:text-emerald-400">
+          <button type="button" onClick={onClose} className="text-sm text-slate-600 hover:text-emerald-400">
             Fechar
           </button>
         </header>
@@ -187,12 +187,12 @@ export default function Groups({ token, onNavigateToPlayers }: GroupsProps) {
     if (modal.type === "delete" && modal.group) {
       return (
         <Modal title="Excluir grupo" onClose={closeModal}>
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-slate-700">
             Tem certeza que deseja excluir o grupo <span className="font-semibold text-white">{modal.group.nome}</span>? Esta acao nao pode ser desfeita.
           </p>
           {formError && <p className="mt-4 rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-2 text-sm text-rose-200">{formError}</p>}
           <div className="mt-6 flex justify-end gap-3">
-            <button type="button" onClick={closeModal} className="rounded-2xl border border-slate-700 px-4 py-2 text-sm text-slate-300">
+            <button type="button" onClick={closeModal} className="rounded-2xl border border-slate-700 px-4 py-2 text-sm text-slate-700">
               Cancelar
             </button>
             <button
@@ -213,7 +213,7 @@ export default function Groups({ token, onNavigateToPlayers }: GroupsProps) {
       <Modal title={isEdit ? "Editar grupo" : "Criar grupo"} onClose={closeModal}>
         <form className="space-y-4" onSubmit={(event) => event.preventDefault()}>
           <label className="flex flex-col gap-2 text-sm text-slate-200">
-            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Nome</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-700">Nome</span>
             <input
               className={inputBase}
               value={formValues.nome}
@@ -224,7 +224,7 @@ export default function Groups({ token, onNavigateToPlayers }: GroupsProps) {
             />
           </label>
           <label className="flex flex-col gap-2 text-sm text-slate-200">
-            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Descricao</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-700">Descricao</span>
             <textarea
               className={`${inputBase} min-h-[120px] resize-none`}
               value={formValues.descricao ?? ""}
@@ -235,7 +235,7 @@ export default function Groups({ token, onNavigateToPlayers }: GroupsProps) {
           </label>
           {formError && <p className="rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-2 text-sm text-rose-200">{formError}</p>}
           <div className="flex justify-end gap-3">
-            <button type="button" onClick={closeModal} className="rounded-2xl border border-slate-700 px-4 py-2 text-sm text-slate-300">
+            <button type="button" onClick={closeModal} className="rounded-2xl border border-slate-700 px-4 py-2 text-sm text-slate-700">
               Cancelar
             </button>
             <button
@@ -260,7 +260,7 @@ export default function Groups({ token, onNavigateToPlayers }: GroupsProps) {
         <div>
           <p className="text-xs uppercase tracking-[0.4em] text-emerald-400">Gestao</p>
           <h2 className="text-2xl font-semibold text-white">Grupos cadastrados</h2>
-          <p className="text-sm text-slate-400">Mantenha cada elenco organizado e defina quem esta ativo no dashboard.</p>
+          <p className="text-sm text-slate-600">Mantenha cada elenco organizado e defina quem esta ativo no dashboard.</p>
         </div>
         <button
           type="button"
@@ -285,28 +285,28 @@ export default function Groups({ token, onNavigateToPlayers }: GroupsProps) {
             <li key={group.id} className={`rounded-3xl border p-5 ${group.is_active ? "border-emerald-400/60 bg-emerald-500/5" : "border-slate-800/60 bg-slate-900/40"}`}>
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-sm uppercase tracking-[0.3em] text-slate-400">{group.nome}</p>
-                  <p className="mt-1 text-xs text-slate-500">Criado em {new Date(group.created_at).toLocaleDateString("pt-BR")}</p>
+                  <p className="text-sm uppercase tracking-[0.3em] text-slate-600">{group.nome}</p>
+                  <p className="mt-1 text-xs text-slate-700">Criado em {new Date(group.created_at).toLocaleDateString("pt-BR")}</p>
                 </div>
-                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${group.is_active ? "bg-emerald-500/20 text-emerald-300" : "bg-slate-800 text-slate-300"}`}>
+                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${group.is_active ? "bg-emerald-500/20 text-emerald-300" : "bg-slate-800 text-slate-700"}`}>
                   {group.is_active ? "Ativo" : "Inativo"}
                 </span>
               </div>
               <div className="mt-4 grid grid-cols-3 gap-3 text-center text-xs">
                 <div className="rounded-2xl bg-black/20 p-3">
-                  <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-400">Ano atual</p>
+                  <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-600">Ano atual</p>
                   <p className="text-lg font-semibold text-white">{group.current_year}</p>
                 </div>
                 <div className="rounded-2xl bg-black/20 p-3">
-                  <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-400">Fundação</p>
+                  <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-600">Fundação</p>
                   <p className="text-lg font-semibold text-white">{group.foundation_year}</p>
                 </div>
                 <div className="rounded-2xl bg-black/20 p-3">
-                  <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-400">Jogadores</p>
+                  <p className="text-[0.65rem] uppercase tracking-[0.3em] text-slate-600">Jogadores</p>
                   <p className="text-lg font-semibold text-white">{group.players_count}</p>
                 </div>
               </div>
-              {group.descricao && <p className="mt-3 text-sm text-slate-300">{group.descricao}</p>}
+              {group.descricao && <p className="mt-3 text-sm text-slate-700">{group.descricao}</p>}
               <div className="mt-4 flex flex-wrap gap-3">
                 <button
                   type="button"
@@ -319,7 +319,7 @@ export default function Groups({ token, onNavigateToPlayers }: GroupsProps) {
                 <button
                   type="button"
                   onClick={() => openEditModal(group)}
-                  className="rounded-2xl border border-slate-700 px-4 py-2 text-xs text-slate-300"
+                  className="rounded-2xl border border-slate-700 px-4 py-2 text-xs text-slate-700"
                 >
                   Editar
                 </button>
@@ -342,7 +342,7 @@ export default function Groups({ token, onNavigateToPlayers }: GroupsProps) {
           ))}
         </ul>
       ) : (
-        <div className="rounded-3xl border border-dashed border-slate-700 px-6 py-10 text-center text-sm text-slate-400">
+        <div className="rounded-3xl border border-dashed border-slate-700 px-6 py-10 text-center text-sm text-slate-600">
           Nenhum grupo cadastrado ainda. Utilize o botao acima para criar o primeiro elenco.
         </div>
       )}
